@@ -5,7 +5,7 @@ package com.jeddigital.kerkotaxi;
  */
 public class Configurations {
 
-    public static final String WEB_SERVICE_URL = "http://www.jeddigital.com/kerko_taxi/service/clients/clients.php";
+    public static final String WEB_SERVICE_URL = "http://jeddigital.com/kerko_taxi/services/clients/updateClientLocation.php";
 
     public static final String SHARED_PREF_CLIENT = "client_prefs";
 
