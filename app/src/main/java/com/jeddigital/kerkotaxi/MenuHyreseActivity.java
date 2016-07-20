@@ -1,5 +1,7 @@
 package com.jeddigital.kerkotaxi;
 
+import android.location.Criteria;
+import android.location.LocationManager;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
@@ -9,6 +11,10 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.jeddigital.kerkotaxi.Models.Taxi;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MenuHyreseActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -23,6 +29,8 @@ public class MenuHyreseActivity extends FragmentActivity implements OnMapReadyCa
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
     }
+
+
 
 
     /**
@@ -42,5 +50,10 @@ public class MenuHyreseActivity extends FragmentActivity implements OnMapReadyCa
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    }
+
+
+    private List<Taxi> getNearbyTaxis (){
+            return null;
     }
 }
