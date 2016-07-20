@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkError;
 import com.android.volley.NoConnectionError;
@@ -27,24 +28,30 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import java.util.HashMap;
-import java.util.Map;
-import com.jeddigital.kerkotaxi.Models.Taxi;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.jeddigital.kerkotaxi.AndroidRestClientApi.Configurations;
+import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MenuHyreseActivity extends FragmentActivity implements LocationListener {
 
-    private GoogleMap Harta;
+    private GoogleMap map;
     Location client_live_location;
+    Gson gson;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        gson = new Gson();
         if (!isGooglePlayServicesAvailable()) {
             finish();                                                                               // ketu mund ti nxjerrim nje warning qe duhet te update ose instaloje google play services
         }
@@ -53,7 +60,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
         SupportMapFragment supportMapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        Harta = supportMapFragment.getMap();
+        map = supportMapFragment.getMap();
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -64,7 +71,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        Harta.setMyLocationEnabled(true);
+        map.setMyLocationEnabled(true);
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         Criteria criteria = new Criteria();
         String bestProvider = locationManager.getBestProvider(criteria, true);
@@ -74,6 +81,11 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         }
 
         locationManager.requestLocationUpdates(bestProvider, 10000, 0, this);
+
+
+        //rest_update_client_location(client_live_location, "1");
+
+        getNearbyVehicles(client_live_location, "1");
     }
 
     private boolean isGooglePlayServicesAvailable() {
@@ -92,18 +104,17 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         double client_latitude = client_live_location.getLatitude();
         double client_longitude = client_live_location.getLongitude();
         LatLng latLng = new LatLng(client_latitude, client_longitude);
-        Harta.moveCamera(CameraUpdateFactory.newLatLngZoom((latLng), 14.0F));
-        send_client_location();
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom((latLng), 14.0F));
+
+        rest_update_client_location(client_live_location, "1");
+        Log.d("Location changed","yes");
     }
 
-    private void send_client_location() {
-        final String client_id = "1";
-        final String client_live_latitude = String.valueOf(client_live_location.getLatitude()).toString().trim();
-        final String client_live_longitude = String.valueOf(client_live_location.getLongitude()).toString().trim();
+    private void rest_update_client_location(Location location, final String client_id) {
+        final String client_live_latitude = String.valueOf(location.getLatitude()).toString().trim();
+        final String client_live_longitude = String.valueOf(location.getLongitude()).toString().trim();
 
-        String url = "http://jeddigital.com/kerko_taxi/services/clients/updateClientLocation.php";
-
-        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
+        StringRequest postRequest = new StringRequest(Request.Method.POST, Configurations.UPDATE_KLIENT_LOCATION_URL,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -116,7 +127,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                             } else {
                                 Log.d("qqq", error_code_desc);
                             }
-
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -148,50 +158,29 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         requestQueue.add(postRequest);
     }
 
-    private void getnearestTaxiList() {
+    private void getNearbyVehicles(Location location, final String client_id) {
         //  SharedPreferences Preferencat_Klient = getSharedPreferences(Configurations.SHARED_PREF_CLIENT, Context.MODE_PRIVATE);
 
         // final String getNearbyTaxis= "getNearbyTaxis";
 
-        final String client_id = "1"; // Preferencat_Klient.getString(Configurations.ClIENT_ID_PREF, "");
-        final String client_live_latitude = String.valueOf(client_live_location.getLatitude()).toString().trim();
-        final String client_live_longitude = String.valueOf(client_live_location.getLongitude()).toString().trim();
+        final String client_live_latitude = String.valueOf(location.getLatitude()).toString().trim();
+        final String client_live_longitude = String.valueOf(location.getLongitude()).toString().trim();
 
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.WEB_SERVICE_URL,
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.GET_NEARBY_TAXIS_URL,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
 
-                        JSONArray getJSONArray;
+                        JSONObject responseJSONObject;
                         try {
-                            getJSONArray = new JSONArray(response);
+                            responseJSONObject = new JSONObject(response);
 
-                            String error_code = getJSONArray.getString(0);
-                            String Adresa = getJSONArray.getString(1);
-                            String Emri_Klientit = getJSONArray.getString(4);
+                            int error_code = responseJSONObject.getInt("error_code");
+                            String error_code_desc = responseJSONObject.getString("error_code_desc");
+                            JSONArray nearbyVehiclesJSONArray = responseJSONObject.getJSONArray("nearby_vehicles");
 
-                            for (int i = 0; i < getJSONArray.length(); i++) {
-                                Log.d("qqq itelmlist json", getJSONArray.getString(i));
-                            }
-
-                         /*   SharedPreferences Preferencat = getSharedPreferences(Configurations.ClIENT_ID_PREF, Context.MODE_PRIVATE);
-                            SharedPreferences.Editor set_Prefs = Preferencat.edit();
-                            set_Prefs.putString(Configurations.BOOKING_ID_PREF, Booking_ID);
-
-                            set_Prefs.commit();
-                            Log.d("qqq", Booking_ID);
-
-                            if (error_code.equals("0")) {
-                                Log.d("qqq", "OKOKOKOKOK");
-                                for (int i = 0; i < getJSONArray.length(); i++) {
-                                    Log.d("qqq itelmlist json", getJSONArray.getString(i));
-                                }
-                            }
-                            else {
-                                Log.d("qqq", "JO   OKOKOKOKOK");
-
-                            }*/
-
+                            List<NearbyVehicle> nearbyVehicles = gson.fromJson(responseJSONObject.getString("nearby_vehicles"), new TypeToken<List<NearbyVehicle>>(){}.getType());
+                            nearbyVehicles.size();
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -252,11 +241,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     @Override
     public void onProviderDisabled(String provider) {
 
-    }
-
-
-    private List<Taxi> getNearbyTaxis() {
-        return null;
     }
 
 }
