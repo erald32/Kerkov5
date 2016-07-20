@@ -98,7 +98,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     private void send_client_location() {
         final String client_id = "1";
-        final String client_live_latitude  = String.valueOf(client_live_location.getLatitude()).toString().trim();
+        final String client_live_latitude = String.valueOf(client_live_location.getLatitude()).toString().trim();
         final String client_live_longitude = String.valueOf(client_live_location.getLongitude()).toString().trim();
 
         String url = "http://jeddigital.com/kerko_taxi/services/clients/updateClientLocation.php";
@@ -111,12 +111,11 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                             JSONObject jsonResponse = new JSONObject(response);
                             int error_code = jsonResponse.getInt("error_code");
                             String error_code_desc = jsonResponse.getString("error_code_desc");
-                                if (error_code == 0) {
-                                    Log.d("qqq","koordinatat u derguan me sukses");
-                                }
-                                else{
-                                    Log.d("qqq", error_code_desc);
-                                }
+                            if (error_code == 0) {
+                                Log.d("qqq", "koordinatat u derguan me sukses");
+                            } else {
+                                Log.d("qqq", error_code_desc);
+                            }
 
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -131,9 +130,8 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                 }
         ) {
             @Override
-            protected Map<String, String> getParams()
-            {
-                Map<String, String>  params = new HashMap<>();
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<>();
                 // the POST parameters:
                 params.put("client_id", client_id);
                 params.put("client_lat", client_live_latitude);
@@ -150,13 +148,13 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         requestQueue.add(postRequest);
     }
 
-    private void getnearestTaxiList(){
-      //  SharedPreferences Preferencat_Klient = getSharedPreferences(Configurations.SHARED_PREF_CLIENT, Context.MODE_PRIVATE);
+    private void getnearestTaxiList() {
+        //  SharedPreferences Preferencat_Klient = getSharedPreferences(Configurations.SHARED_PREF_CLIENT, Context.MODE_PRIVATE);
 
-       // final String getNearbyTaxis= "getNearbyTaxis";
+        // final String getNearbyTaxis= "getNearbyTaxis";
 
         final String client_id = "1"; // Preferencat_Klient.getString(Configurations.ClIENT_ID_PREF, "");
-        final String client_live_latitude  = String.valueOf(client_live_location.getLatitude()).toString().trim();
+        final String client_live_latitude = String.valueOf(client_live_location.getLatitude()).toString().trim();
         final String client_live_longitude = String.valueOf(client_live_location.getLongitude()).toString().trim();
 
         StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.WEB_SERVICE_URL,
@@ -168,7 +166,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                         try {
                             getJSONArray = new JSONArray(response);
 
-                            String error_code =getJSONArray.getString(0);
+                            String error_code = getJSONArray.getString(0);
                             String Adresa = getJSONArray.getString(1);
                             String Emri_Klientit = getJSONArray.getString(4);
 
@@ -194,7 +192,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
                             }*/
 
-
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -203,12 +200,10 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
-                if(error instanceof NoConnectionError) {
+                if (error instanceof NoConnectionError) {
                     Log.d("qqq", "NoConnectionError: " + error.getMessage());
-                }
-                else if( error instanceof TimeoutError) {
-                }
-                else if (error instanceof AuthFailureError) {
+                } else if (error instanceof TimeoutError) {
+                } else if (error instanceof AuthFailureError) {
                     Log.d("qqq", "AuthFailureError: " + error.getMessage());
                 } else if (error instanceof ServerError) {
                     Log.d("qqq", "ServerError: " + error.getMessage());
@@ -218,10 +213,10 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                     Log.d("qqq", "ParseError: " + error.getMessage());
                 }
             }
-        }){
+        }) {
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> params = new HashMap<>();
+                Map<String, String> params = new HashMap<>();
 
                 //params.put("getNearbyTaxis", getNearbyTaxis);
                 params.put("client_id", client_id);
@@ -243,6 +238,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         requestQueue.add(stringRequest);
     }
+
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
 
@@ -259,62 +255,8 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     }
 
 
-    private List<Taxi> getNearbyTaxis (){
-            return null;
+    private List<Taxi> getNearbyTaxis() {
+        return null;
     }
-
-
-/*    private void kot(){
-
-
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.WEB_SERVICE_URL,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-
-                        if (response.equalsIgnoreCase(String.valueOf(Configurations.RESPONSE_SUCCESS))) {
-                            Log.d("qqq", "Po dergohen te dhenat e vendndodhjes se makines");
-                        } else {
-                            Log.d("qqq", " erroriiiiiiiiiiiiiiiiiiiiiii *********:" + response);
-
-                        }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
-                if(error instanceof NoConnectionError) {
-                    Log.d("qqq", "NoConnectionError: " + error.getMessage());
-                }
-                else if( error instanceof TimeoutError) {
-
-                }
-                else if (error instanceof AuthFailureError) {
-                    Log.d("qqq", "AuthFailureError: " + error.getMessage());
-                } else if (error instanceof ServerError) {
-                    Log.d("qqq", "ServerError: " + error.getMessage());
-                } else if (error instanceof NetworkError) {
-                    Log.d("qqq", "NetworkError: " + error.getMessage());
-                } else if (error instanceof ParseError) {
-                    Log.d("qqq", "ParseError: " + error.getMessage());
-                }
-            }
-        }){
-            @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> params = new HashMap<>();
-
-                params.put("vehicleLocation", "vehicleLocation");
-                params.put("vehicle_id", "1");
-                params.put("latitude", "41.330092");
-                params.put("longitude", "19.547541");
-                return params;
-            }
-        };
-        //Adding the string request to the queue
-        RequestQueue requestQueue = Volley.newRequestQueue(this);
-        requestQueue.add(stringRequest);
-    }
-*/
 
 }
