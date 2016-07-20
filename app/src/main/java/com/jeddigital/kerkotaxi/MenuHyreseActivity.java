@@ -99,7 +99,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     }
 
     @Override
-    public void onLocationChanged(Location location) {
+    public void onLocationChanged(Location location) { 
         client_live_location = location;
         double client_latitude = client_live_location.getLatitude();
         double client_longitude = client_live_location.getLongitude();
