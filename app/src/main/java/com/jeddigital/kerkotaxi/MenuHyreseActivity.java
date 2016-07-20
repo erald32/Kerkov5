@@ -30,7 +30,6 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.HashMap;
 import java.util.Map;
 import com.jeddigital.kerkotaxi.Models.Taxi;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -74,8 +73,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             onLocationChanged(client_live_location);
         }
 
-        locationManager.requestLocationUpdates(bestProvider, 10000, 0, (LocationListener) this);
-        send_client_location();
+        locationManager.requestLocationUpdates(bestProvider, 10000, 0, this);
     }
 
     private boolean isGooglePlayServicesAvailable() {
@@ -95,71 +93,61 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         double client_longitude = client_live_location.getLongitude();
         LatLng latLng = new LatLng(client_latitude, client_longitude);
         Harta.moveCamera(CameraUpdateFactory.newLatLngZoom((latLng), 14.0F));
-        //googleMap.animateCamera(CameraUpdateFactory.zoomTo(13));
-       // send_client_location();
+        send_client_location();
     }
-    private void send_client_location(){
-        final String client_id = "1";
-        final String client_live_latitude  ="41.330092"; //String.valueOf(client_live_location.getLatitude()).toString().trim();
-        final String client_live_longitude = "19.547541";//String.valueOf(client_live_location.getLongitude()).toString().trim();
 
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.WEB_SERVICE_URL,
+    private void send_client_location() {
+        final String client_id = "1";
+        final String client_live_latitude  = String.valueOf(client_live_location.getLatitude()).toString().trim();
+        final String client_live_longitude = String.valueOf(client_live_location.getLongitude()).toString().trim();
+
+        String url = "http://jeddigital.com/kerko_taxi/services/clients/updateClientLocation.php";
+
+        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        JSONObject  JSONresponse;
                         try {
-                            JSONresponse = new JSONObject(response);
-
-                            int error_code = JSONresponse.getInt("error_code");
-                            String error_code_desc = JSONresponse.getString("error_code_desc");
-
-                            if (error_code == 0) {
-                                Log.d("qqq" ,"u futen");
-                            }
-                            else{
-                                Log.d("qqq" ,"snuk");
-                            }
+                            JSONObject jsonResponse = new JSONObject(response);
+                            int error_code = jsonResponse.getInt("error_code");
+                            String error_code_desc = jsonResponse.getString("error_code_desc");
+                                if (error_code == 0) {
+                                    Log.d("qqq","koordinatat u derguan me sukses");
+                                }
+                                else{
+                                    Log.d("qqq", error_code_desc);
+                                }
 
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
-                }, new Response.ErrorListener() {
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        error.printStackTrace();
+                    }
+                }
+        ) {
             @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
-                if(error instanceof NoConnectionError) {
-                    Log.d("qqq", "NoConnectionError: " + error.getMessage());
-                }
-                else if( error instanceof TimeoutError) {
-                }
-                else if (error instanceof AuthFailureError) {
-                    Log.d("qqq", "AuthFailureError: " + error.getMessage());
-                } else if (error instanceof ServerError) {
-                    Log.d("qqq", "ServerError: " + error.getMessage());
-                } else if (error instanceof NetworkError) {
-                    Log.d("qqq", "NetworkError: " + error.getMessage());
-                } else if (error instanceof ParseError) {
-                    Log.d("qqq", "ParseError: " + error.getMessage());
-                }
-            }
-        }){
-            @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String,String> params = new HashMap<>();
-
+            protected Map<String, String> getParams()
+            {
+                Map<String, String>  params = new HashMap<>();
+                // the POST parameters:
                 params.put("client_id", client_id);
                 params.put("client_lat", client_live_latitude);
                 params.put("client_lng", client_live_longitude);
-                Log.d("qqq send", client_live_latitude);
-                Log.d("qqq send ", client_live_longitude);
+
+                Log.d("qqq_liveLocation_params", client_live_latitude);
+                Log.d("qqq_liveLocation_params", client_live_longitude);
+
                 return params;
             }
         };
         //Adding the string request to the queue
         RequestQueue requestQueue = Volley.newRequestQueue(this);
-        requestQueue.add(stringRequest);
+        requestQueue.add(postRequest);
     }
 
     private void getnearestTaxiList(){
@@ -269,8 +257,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     public void onProviderDisabled(String provider) {
 
     }
-
-
 
 
     private List<Taxi> getNearbyTaxis (){
