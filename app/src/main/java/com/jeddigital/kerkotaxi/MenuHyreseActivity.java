@@ -1,7 +1,5 @@
 package com.jeddigital.kerkotaxi;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -31,10 +29,13 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import java.util.HashMap;
 import java.util.Map;
-import com.google.android.gms.maps.OnMapReadyCallback;
 import com.jeddigital.kerkotaxi.Models.Taxi;
-import java.util.List;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.List;
 
 public class MenuHyreseActivity extends FragmentActivity implements LocationListener {
 
@@ -50,12 +51,10 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         }
 
         setContentView(R.layout.activity_menu_hyrese);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync((OnMapReadyCallback) this);
 
-
+        SupportMapFragment supportMapFragment =
+                (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        Harta = supportMapFragment.getMap();
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -76,6 +75,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         }
 
         locationManager.requestLocationUpdates(bestProvider, 10000, 0, (LocationListener) this);
+        send_client_location();
     }
 
     private boolean isGooglePlayServicesAvailable() {
@@ -96,28 +96,33 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         LatLng latLng = new LatLng(client_latitude, client_longitude);
         Harta.moveCamera(CameraUpdateFactory.newLatLngZoom((latLng), 14.0F));
         //googleMap.animateCamera(CameraUpdateFactory.zoomTo(13));
-        send_client_location();
+       // send_client_location();
     }
-
     private void send_client_location(){
-        SharedPreferences Preferencat_Klient = getSharedPreferences(Configurations.SHARED_PREF_CLIENT, Context.MODE_PRIVATE);
-
-        final String getNearbyTaxis= "getNearbyTaxis";
-
-        final String client_id = "1"; // Preferencat_Klient.getString(Configurations.ClIENT_ID_PREF, "");
-        final String client_live_latitude  = String.valueOf(client_live_location.getLatitude()).toString().trim();
-        final String client_live_longitude = String.valueOf(client_live_location.getLongitude()).toString().trim();
+        final String client_id = "1";
+        final String client_live_latitude  ="41.330092"; //String.valueOf(client_live_location.getLatitude()).toString().trim();
+        final String client_live_longitude = "19.547541";//String.valueOf(client_live_location.getLongitude()).toString().trim();
 
         StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.WEB_SERVICE_URL,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
+                        JSONObject  JSONresponse;
+                        try {
+                            JSONresponse = new JSONObject(response);
 
-                        if (response.equalsIgnoreCase(String.valueOf(Configurations.RESPONSE_SUCCESS))) {
-                            Log.d("qqq", "Po dergohen te dhenat e vendndodhjes se klientit");
-                        } else {
-                            Log.d("qqq", " erroriiiiiiiiiiiiiiiiiiiiiii *********:" + response);
+                            int error_code = JSONresponse.getInt("error_code");
+                            String error_code_desc = JSONresponse.getString("error_code_desc");
 
+                            if (error_code == 0) {
+                                Log.d("qqq" ,"u futen");
+                            }
+                            else{
+                                Log.d("qqq" ,"snuk");
+                            }
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
                     }
                 }, new Response.ErrorListener() {
@@ -128,7 +133,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                     Log.d("qqq", "NoConnectionError: " + error.getMessage());
                 }
                 else if( error instanceof TimeoutError) {
-
                 }
                 else if (error instanceof AuthFailureError) {
                     Log.d("qqq", "AuthFailureError: " + error.getMessage());
@@ -145,13 +149,99 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String,String> params = new HashMap<>();
 
-                params.put("getNearbyTaxis", getNearbyTaxis);
+                params.put("client_id", client_id);
+                params.put("client_lat", client_live_latitude);
+                params.put("client_lng", client_live_longitude);
+                Log.d("qqq send", client_live_latitude);
+                Log.d("qqq send ", client_live_longitude);
+                return params;
+            }
+        };
+        //Adding the string request to the queue
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        requestQueue.add(stringRequest);
+    }
+
+    private void getnearestTaxiList(){
+      //  SharedPreferences Preferencat_Klient = getSharedPreferences(Configurations.SHARED_PREF_CLIENT, Context.MODE_PRIVATE);
+
+       // final String getNearbyTaxis= "getNearbyTaxis";
+
+        final String client_id = "1"; // Preferencat_Klient.getString(Configurations.ClIENT_ID_PREF, "");
+        final String client_live_latitude  = String.valueOf(client_live_location.getLatitude()).toString().trim();
+        final String client_live_longitude = String.valueOf(client_live_location.getLongitude()).toString().trim();
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.WEB_SERVICE_URL,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+                        JSONArray getJSONArray;
+                        try {
+                            getJSONArray = new JSONArray(response);
+
+                            String error_code =getJSONArray.getString(0);
+                            String Adresa = getJSONArray.getString(1);
+                            String Emri_Klientit = getJSONArray.getString(4);
+
+                            for (int i = 0; i < getJSONArray.length(); i++) {
+                                Log.d("qqq itelmlist json", getJSONArray.getString(i));
+                            }
+
+                         /*   SharedPreferences Preferencat = getSharedPreferences(Configurations.ClIENT_ID_PREF, Context.MODE_PRIVATE);
+                            SharedPreferences.Editor set_Prefs = Preferencat.edit();
+                            set_Prefs.putString(Configurations.BOOKING_ID_PREF, Booking_ID);
+
+                            set_Prefs.commit();
+                            Log.d("qqq", Booking_ID);
+
+                            if (error_code.equals("0")) {
+                                Log.d("qqq", "OKOKOKOKOK");
+                                for (int i = 0; i < getJSONArray.length(); i++) {
+                                    Log.d("qqq itelmlist json", getJSONArray.getString(i));
+                                }
+                            }
+                            else {
+                                Log.d("qqq", "JO   OKOKOKOKOK");
+
+                            }*/
+
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
+                if(error instanceof NoConnectionError) {
+                    Log.d("qqq", "NoConnectionError: " + error.getMessage());
+                }
+                else if( error instanceof TimeoutError) {
+                }
+                else if (error instanceof AuthFailureError) {
+                    Log.d("qqq", "AuthFailureError: " + error.getMessage());
+                } else if (error instanceof ServerError) {
+                    Log.d("qqq", "ServerError: " + error.getMessage());
+                } else if (error instanceof NetworkError) {
+                    Log.d("qqq", "NetworkError: " + error.getMessage());
+                } else if (error instanceof ParseError) {
+                    Log.d("qqq", "ParseError: " + error.getMessage());
+                }
+            }
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String,String> params = new HashMap<>();
+
+                //params.put("getNearbyTaxis", getNearbyTaxis);
                 params.put("client_id", client_id);
                 params.put("client_lat", client_live_latitude);
                 params.put("client_lng", client_live_longitude);
 
-                Log.d("qqq", client_live_latitude);
-                Log.d("qqq", client_live_longitude);
+                Log.d("qqq send", client_live_latitude);
+                Log.d("qqq send ", client_live_longitude);
        /*       SharedPreferences Preferencat_Klient = getSharedPreferences(Configurations.SHARED_PREF_CLIENT, Context.MODE_PRIVATE);
                 SharedPreferences.Editor set_Prefs = Preferencat_Klient.edit();
                 set_Prefs.putString(Configurations.CLIENT_LATITUDE_PREF, client_live_latitude);
@@ -186,4 +276,59 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     private List<Taxi> getNearbyTaxis (){
             return null;
     }
+
+
+/*    private void kot(){
+
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.WEB_SERVICE_URL,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+                        if (response.equalsIgnoreCase(String.valueOf(Configurations.RESPONSE_SUCCESS))) {
+                            Log.d("qqq", "Po dergohen te dhenat e vendndodhjes se makines");
+                        } else {
+                            Log.d("qqq", " erroriiiiiiiiiiiiiiiiiiiiiii *********:" + response);
+
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
+                if(error instanceof NoConnectionError) {
+                    Log.d("qqq", "NoConnectionError: " + error.getMessage());
+                }
+                else if( error instanceof TimeoutError) {
+
+                }
+                else if (error instanceof AuthFailureError) {
+                    Log.d("qqq", "AuthFailureError: " + error.getMessage());
+                } else if (error instanceof ServerError) {
+                    Log.d("qqq", "ServerError: " + error.getMessage());
+                } else if (error instanceof NetworkError) {
+                    Log.d("qqq", "NetworkError: " + error.getMessage());
+                } else if (error instanceof ParseError) {
+                    Log.d("qqq", "ParseError: " + error.getMessage());
+                }
+            }
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String,String> params = new HashMap<>();
+
+                params.put("vehicleLocation", "vehicleLocation");
+                params.put("vehicle_id", "1");
+                params.put("latitude", "41.330092");
+                params.put("longitude", "19.547541");
+                return params;
+            }
+        };
+        //Adding the string request to the queue
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        requestQueue.add(stringRequest);
+    }
+*/
+
 }
