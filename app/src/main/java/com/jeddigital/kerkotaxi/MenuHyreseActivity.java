@@ -102,8 +102,9 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     private void send_client_location(){
         SharedPreferences Preferencat_Klient = getSharedPreferences(Configurations.SHARED_PREF_CLIENT, Context.MODE_PRIVATE);
 
-        final String client_location= "clientlocation";
-        final String client_id = Preferencat_Klient.getString(Configurations.ClIENT_ID_PREF, "");
+        final String getNearbyTaxis= "getNearbyTaxis";
+
+        final String client_id = "1"; // Preferencat_Klient.getString(Configurations.ClIENT_ID_PREF, "");
         final String client_live_latitude  = String.valueOf(client_live_location.getLatitude()).toString().trim();
         final String client_live_longitude = String.valueOf(client_live_location.getLongitude()).toString().trim();
 
@@ -144,10 +145,10 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String,String> params = new HashMap<>();
 
-                params.put("clientlocation", client_location);
+                params.put("getNearbyTaxis", getNearbyTaxis);
                 params.put("client_id", client_id);
-                params.put("lat", client_live_latitude);
-                params.put("lng", client_live_longitude);
+                params.put("client_lat", client_live_latitude);
+                params.put("client_lng", client_live_longitude);
 
                 Log.d("qqq", client_live_latitude);
                 Log.d("qqq", client_live_longitude);
