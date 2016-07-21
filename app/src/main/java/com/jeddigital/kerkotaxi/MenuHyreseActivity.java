@@ -2,6 +2,7 @@ package com.jeddigital.kerkotaxi;
 
 import android.content.pm.PackageManager;
 import android.location.Criteria;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -9,6 +10,10 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkError;
@@ -27,6 +32,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -39,8 +45,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class MenuHyreseActivity extends FragmentActivity implements LocationListener {
@@ -48,10 +56,19 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     private GoogleMap map;
     Location client_live_location;
     Gson gson;
+    Geocoder geocoder;
+    TextView centerPosTV;
+    RelativeLayout overMapLayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_menu_hyrese);
+
+        centerPosTV = (TextView) findViewById(R.id.center_position_tv);
+        overMapLayer = (RelativeLayout)findViewById(R.id.overMapLayer);
+
+        geocoder = new Geocoder(this, Locale.getDefault());
 
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(boolean.class, new BooleanTypeAdapter());
@@ -62,7 +79,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             finish();                                                                               // ketu mund ti nxjerrim nje warning qe duhet te update ose instaloje google play services
         }
 
-        setContentView(R.layout.activity_menu_hyrese);
 
         SupportMapFragment supportMapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -88,10 +104,11 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
         locationManager.requestLocationUpdates(bestProvider, 10000, 0, this);
 
+        setListenersToUIElements();
 
-        //rest_update_client_location(client_live_location, "1");
-
-        getNearbyVehicles(client_live_location, "1");
+    //  rest_update_client_location(client_live_location, "1");
+    //  get_name_for_location(new LatLng(41.325935, 19.818081));
+    //  rest_get_nearby_vehicles(client_live_location, "1");
     }
 
     private boolean isGooglePlayServicesAvailable() {
@@ -112,7 +129,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         LatLng latLng = new LatLng(client_latitude, client_longitude);
         map.moveCamera(CameraUpdateFactory.newLatLngZoom((latLng), 14.0F));
 
-        rest_update_client_location(client_live_location, "1");
+        //rest_update_client_location(client_live_location, "1");
         Log.d("Location changed","yes");
     }
 
@@ -164,7 +181,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         requestQueue.add(postRequest);
     }
 
-    private void getNearbyVehicles(Location location, final String client_id) {
+    private void rest_get_nearby_vehicles(Location location, final String client_id) {
         //  SharedPreferences Preferencat_Klient = getSharedPreferences(Configurations.SHARED_PREF_CLIENT, Context.MODE_PRIVATE);
 
         // final String getNearbyTaxis= "getNearbyTaxis";
@@ -344,6 +361,41 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         requestQueue.add(stringRequest);
     }
 
+    private String get_name_for_location(LatLng location) {
+        String addressName = "";
+        try {
+            List<android.location.Address> addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1);
+
+            if(addresses.size() > 0){
+                for(int i = 0; i<=addresses.get(0).getMaxAddressLineIndex();i++){
+                    addressName += addresses.get(0).getAddressLine(i)+", ";
+                }
+                addressName = addressName.substring(0,addressName.length()-2);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return addressName;
+    }
+
+    private void setListenersToUIElements(){
+        map.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
+            @Override
+            public void onCameraChange(CameraPosition cameraPosition) {
+                centerPosTV.setText(get_name_for_location(cameraPosition.target));
+            }
+        });
+        overMapLayer.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if(event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE){
+                    centerPosTV.setText("...");
+                }
+                return false;
+            }
+        });
+    }
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {

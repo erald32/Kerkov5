@@ -11,4 +11,24 @@
     android:id="@+id/map"
     android:name="com.google.android.gms.maps.SupportMapFragment"/>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="kerko taxi"
+        android:id="@+id/kerko_taxi_btn"
+        android:layout_gravity="center_horizontal|bottom" />
+
+    <RelativeLayout
+        android:id="@+id/overMapLayer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </RelativeLayout>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="!"
+        android:id="@+id/center_position_tv"
+        android:layout_gravity="center" />
+
 </FrameLayout>
