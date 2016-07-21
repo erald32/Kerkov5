@@ -99,7 +99,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     }
 
     @Override
-    public void onLocationChanged(Location location) { 
+    public void onLocationChanged(Location location) {
         client_live_location = location;
         double client_latitude = client_live_location.getLatitude();
         double client_longitude = client_live_location.getLongitude();
@@ -227,6 +227,115 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         requestQueue.add(stringRequest);
     }
+
+    private void rest_request_taxi(final int vehicle_id, final String client_id, final LatLng requested_location) {
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.REQUEST_TAXI_URL,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+                        JSONObject responseJSONObject;
+                        try {
+                            responseJSONObject = new JSONObject(response);
+
+                            int error_code = responseJSONObject.getInt("error_code");
+                            String error_code_desc = responseJSONObject.getString("error_code_desc");
+
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
+                if (error instanceof NoConnectionError) {
+                    Log.d("qqq", "NoConnectionError: " + error.getMessage());
+                } else if (error instanceof TimeoutError) {
+                } else if (error instanceof AuthFailureError) {
+                    Log.d("qqq", "AuthFailureError: " + error.getMessage());
+                } else if (error instanceof ServerError) {
+                    Log.d("qqq", "ServerError: " + error.getMessage());
+                } else if (error instanceof NetworkError) {
+                    Log.d("qqq", "NetworkError: " + error.getMessage());
+                } else if (error instanceof ParseError) {
+                    Log.d("qqq", "ParseError: " + error.getMessage());
+                }
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+
+                //params.put("getNearbyTaxis", getNearbyTaxis);
+                params.put("client_id", client_id);
+                params.put("vehicle_id", ""+vehicle_id);
+                params.put("requested_lat", ""+requested_location.latitude);
+                params.put("requested_lat", ""+requested_location.longitude);
+
+                return params;
+            }
+        };
+        //Adding the string request to the queue
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        requestQueue.add(stringRequest);
+    }
+
+    private void rest_cancel_request(final int booking_id, final int vehicle_id) {
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.CANCEL_REQUEST_URL,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+                        JSONObject responseJSONObject;
+                        try {
+                            responseJSONObject = new JSONObject(response);
+
+                            int error_code = responseJSONObject.getInt("error_code");
+                            String error_code_desc = responseJSONObject.getString("error_code_desc");
+
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
+                if (error instanceof NoConnectionError) {
+                    Log.d("qqq", "NoConnectionError: " + error.getMessage());
+                } else if (error instanceof TimeoutError) {
+                } else if (error instanceof AuthFailureError) {
+                    Log.d("qqq", "AuthFailureError: " + error.getMessage());
+                } else if (error instanceof ServerError) {
+                    Log.d("qqq", "ServerError: " + error.getMessage());
+                } else if (error instanceof NetworkError) {
+                    Log.d("qqq", "NetworkError: " + error.getMessage());
+                } else if (error instanceof ParseError) {
+                    Log.d("qqq", "ParseError: " + error.getMessage());
+                }
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+
+                //params.put("getNearbyTaxis", getNearbyTaxis);
+                params.put("booking_id", ""+booking_id);
+                params.put("vehicle_id", ""+vehicle_id);
+
+                return params;
+            }
+        };
+        //Adding the string request to the queue
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        requestQueue.add(stringRequest);
+    }
+
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
