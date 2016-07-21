@@ -29,9 +29,11 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jeddigital.kerkotaxi.AndroidRestClientApi.Configurations;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
+import com.jeddigital.kerkotaxi.GSON.BooleanTypeAdapter;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -51,7 +53,11 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        gson = new Gson();
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(boolean.class, new BooleanTypeAdapter());
+        gson = builder.create();
+
+
         if (!isGooglePlayServicesAvailable()) {
             finish();                                                                               // ketu mund ti nxjerrim nje warning qe duhet te update ose instaloje google play services
         }
@@ -180,6 +186,8 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                             JSONArray nearbyVehiclesJSONArray = responseJSONObject.getJSONArray("nearby_vehicles");
 
                             List<NearbyVehicle> nearbyVehicles = gson.fromJson(responseJSONObject.getString("nearby_vehicles"), new TypeToken<List<NearbyVehicle>>(){}.getType());
+                            nearbyVehicles.get(0).getLat();
+
                             nearbyVehicles.size();
                         } catch (JSONException e) {
                             e.printStackTrace();
