@@ -186,8 +186,8 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                             JSONArray nearbyVehiclesJSONArray = responseJSONObject.getJSONArray("nearby_vehicles");
 
                             List<NearbyVehicle> nearbyVehicles = gson.fromJson(responseJSONObject.getString("nearby_vehicles"), new TypeToken<List<NearbyVehicle>>(){}.getType());
-                            nearbyVehicles.get(0).getLat();
-
+                            nearbyVehicles.get(0);
+                            Log.d("qqq", ""+ nearbyVehicles.get(0));
                             nearbyVehicles.size();
                         } catch (JSONException e) {
                             e.printStackTrace();
