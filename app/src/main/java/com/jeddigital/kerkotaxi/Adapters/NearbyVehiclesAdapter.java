@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.TextView;
 
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
 import com.jeddigital.kerkotaxi.R;
@@ -43,7 +44,14 @@ public class NearbyVehiclesAdapter extends BaseAdapter{
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View vi;
-        vi = inflater.inflate(R.layout.listview_item_nearby_vehicle, null);
+        vi = inflater.inflate(R.layout.dialog_listview_item_nearby_vehicle, null);
+        TextView emerMbiemer = (TextView) vi.findViewById(R.id.emer_mbiemer);
+        TextView tipiMakines = (TextView) vi.findViewById(R.id.tip_makine);
+        TextView arrivalTime = (TextView) vi.findViewById(R.id.mberitja);
+
+        emerMbiemer.setText(nearbyVehicles.get(position).getDriver().getFirst_name() + " " + nearbyVehicles.get(position).getDriver().getLast_name());
+        tipiMakines.setText(nearbyVehicles.get(position).getCar_model());
+        arrivalTime.setText(nearbyVehicles.get(position).getDistance_params().getTime_readable());
 
 
         return vi;

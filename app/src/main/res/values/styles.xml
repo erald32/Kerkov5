@@ -8,4 +8,23 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+
+    <style name="FromBottomDialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/show_dialog</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_down</item>
+    </style>
+
+    <style name="UpAndDownDialogSlideAnim" parent="@style/Theme.AppCompat.Dialog">
+        <item name="android:windowAnimationStyle">@style/FromBottomDialogAnimation</item>
+    </style>
+
+    <style name="FromTopDialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/perzgjidh_rrethin_show_anim</item>
+        <item name="android:windowExitAnimation">@anim/perzgjidh_rrethin_hide_anim</item>
+    </style>
+
+    <style name="DownAndUpDialogSlideAnim" parent="@style/Theme.AppCompat.Dialog">
+        <item name="android:windowAnimationStyle">@style/FromTopDialogAnimation</item>
+    </style>
+
 </resources>

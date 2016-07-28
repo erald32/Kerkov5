@@ -134,7 +134,7 @@ public class NearbyVehicle {
         this.distance_params = distance_params;
     }
 
-    private class DistanceParam{
+    public class DistanceParam{
 
         @SerializedName("distance_in_meters")
         public int distance_in_meters;

@@ -1,5 +1,7 @@
 package com.jeddigital.kerkotaxi;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -10,8 +12,11 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -37,6 +42,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.jeddigital.kerkotaxi.Adapters.NearbyVehiclesAdapter;
 import com.jeddigital.kerkotaxi.AndroidRestClientApi.Configurations;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
 import com.jeddigital.kerkotaxi.GSON.BooleanTypeAdapter;
@@ -108,7 +114,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     //  rest_update_client_location(client_live_location, "1");
     //  get_name_for_location(new LatLng(41.325935, 19.818081));
-    //  rest_get_nearby_vehicles(client_live_location, "1");
+        rest_get_nearby_vehicles(client_live_location, "1");
     }
 
     private boolean isGooglePlayServicesAvailable() {
@@ -200,12 +206,25 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
                             int error_code = responseJSONObject.getInt("error_code");
                             String error_code_desc = responseJSONObject.getString("error_code_desc");
-                            JSONArray nearbyVehiclesJSONArray = responseJSONObject.getJSONArray("nearby_vehicles");
 
-                            List<NearbyVehicle> nearbyVehicles = gson.fromJson(responseJSONObject.getString("nearby_vehicles"), new TypeToken<List<NearbyVehicle>>(){}.getType());
-                            nearbyVehicles.get(0);
-                            Log.d("qqq", ""+ nearbyVehicles.get(0));
-                            nearbyVehicles.size();
+                            if(error_code == 0){
+                                JSONArray nearbyVehiclesJSONArray = responseJSONObject.getJSONArray("nearby_vehicles");
+
+                                List<NearbyVehicle> nearbyVehicles = gson.fromJson(responseJSONObject.getString("nearby_vehicles"), new TypeToken<List<NearbyVehicle>>(){}.getType());
+                                nearbyVehicles.get(0);
+
+                                AlertDialog.Builder nearbyVehiclesDB =  new AlertDialog.Builder(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
+                                LayoutInflater inflater = MenuHyreseActivity.this.getLayoutInflater();
+                                View dialog_nearby_vehicles_view = inflater.inflate(R.layout.dialog_nearby_vehicles, null);
+                                nearbyVehiclesDB.setView(dialog_nearby_vehicles_view)
+                                        .setTitle("TAKSITË PRANË JUSH");
+                                ListView nearbyVehiclesLV = (ListView) dialog_nearby_vehicles_view.findViewById(R.id.nearbyVehiclesLV);
+                                nearbyVehiclesLV.setAdapter(new NearbyVehiclesAdapter(nearbyVehicles, MenuHyreseActivity.this));
+
+                                nearbyVehiclesDB.create().show();
+
+                            }
+
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
