@@ -12,6 +12,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -37,7 +38,6 @@ import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.daimajia.slider.library.SliderLayout;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdate;
@@ -52,6 +52,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.jeddigital.kerkotaxi.Adapters.NearbyVehiclesAdapter;
+import com.jeddigital.kerkotaxi.Adapters.NearbyVehiclesViewPagerAdapter;
 import com.jeddigital.kerkotaxi.AndroidRestClientApi.Configurations;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
 import com.jeddigital.kerkotaxi.GSON.BooleanTypeAdapter;
@@ -80,7 +81,8 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     DisplayMetrics metrics;
     int scrWidthInPX;
     int scrHeightInPX;
-    private SliderLayout mDemoSlider;
+
+    ViewPager nearbyVehiclesViewpager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +93,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         centerPosTV = (TextView) findViewById(R.id.center_position_tv);
         overMapLayer = (RelativeLayout)findViewById(R.id.overMapLayer);
         kerkoTaxoBTN = (Button) findViewById(R.id.kerko_taxi_btn);
+        nearbyVehiclesViewpager = (ViewPager) findViewById(R.id.view_pager);
 
 
         metrics = new DisplayMetrics();
@@ -261,6 +264,12 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                                 nearbyVehiclesLV.setAdapter(new NearbyVehiclesAdapter(nearbyVehicles, MenuHyreseActivity.this));
 
                                 nearbyVehiclesDialog.show();
+
+                                //------------------------------------
+
+                                NearbyVehiclesViewPagerAdapter nearbyVehiclesViewPagerAdapter = new NearbyVehiclesViewPagerAdapter(nearbyVehicles, MenuHyreseActivity.this);
+                                nearbyVehiclesViewpager.setAdapter(nearbyVehiclesViewPagerAdapter);
+
                             }
 
                         } catch (JSONException e) {
