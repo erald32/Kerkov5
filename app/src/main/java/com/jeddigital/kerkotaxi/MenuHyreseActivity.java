@@ -11,11 +11,15 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -66,6 +70,12 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     TextView centerPosTV;
     RelativeLayout overMapLayer;
 
+    Button kerkoTaxoBTN;
+
+    DisplayMetrics metrics;
+    int scrWidthInPX;
+    int scrHeightInPX;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +83,13 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
         centerPosTV = (TextView) findViewById(R.id.center_position_tv);
         overMapLayer = (RelativeLayout)findViewById(R.id.overMapLayer);
+        kerkoTaxoBTN = (Button) findViewById(R.id.kerko_taxi_btn);
+
+
+        metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        scrWidthInPX = metrics.widthPixels;
+        scrHeightInPX = metrics.heightPixels;
 
         geocoder = new Geocoder(this, Locale.getDefault());
 
@@ -114,7 +131,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     //  rest_update_client_location(client_live_location, "1");
     //  get_name_for_location(new LatLng(41.325935, 19.818081));
-        rest_get_nearby_vehicles(client_live_location, "1");
     }
 
     private boolean isGooglePlayServicesAvailable() {
@@ -213,16 +229,16 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                                 List<NearbyVehicle> nearbyVehicles = gson.fromJson(responseJSONObject.getString("nearby_vehicles"), new TypeToken<List<NearbyVehicle>>(){}.getType());
                                 nearbyVehicles.get(0);
 
-                                AlertDialog.Builder nearbyVehiclesDB =  new AlertDialog.Builder(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
-                                LayoutInflater inflater = MenuHyreseActivity.this.getLayoutInflater();
-                                View dialog_nearby_vehicles_view = inflater.inflate(R.layout.dialog_nearby_vehicles, null);
-                                nearbyVehiclesDB.setView(dialog_nearby_vehicles_view)
-                                        .setTitle("TAKSITË PRANË JUSH");
-                                ListView nearbyVehiclesLV = (ListView) dialog_nearby_vehicles_view.findViewById(R.id.nearbyVehiclesLV);
+                                Dialog nearbyVehiclesDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
+                                nearbyVehiclesDialog.setContentView(R.layout.dialog_nearby_vehicles);
+                                nearbyVehiclesDialog.getWindow().getAttributes().height = scrHeightInPX/2;
+                                nearbyVehiclesDialog.getWindow().getAttributes().gravity = Gravity.BOTTOM;
+                                nearbyVehiclesDialog.getWindow().getAttributes().flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
+
+                                ListView nearbyVehiclesLV = (ListView) nearbyVehiclesDialog.findViewById(R.id.nearbyVehiclesLV);
                                 nearbyVehiclesLV.setAdapter(new NearbyVehiclesAdapter(nearbyVehicles, MenuHyreseActivity.this));
 
-                                nearbyVehiclesDB.create().show();
-
+                                nearbyVehiclesDialog.show();
                             }
 
                         } catch (JSONException e) {
@@ -412,6 +428,13 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                     centerPosTV.setText("...");
                 }
                 return false;
+            }
+        });
+
+        kerkoTaxoBTN.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rest_get_nearby_vehicles(client_live_location, "1");
             }
         });
     }
