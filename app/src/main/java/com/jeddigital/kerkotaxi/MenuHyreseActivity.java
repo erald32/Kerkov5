@@ -2,6 +2,7 @@ package com.jeddigital.kerkotaxi;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -36,13 +37,17 @@ import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.daimajia.slider.library.SliderLayout;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -75,11 +80,13 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     DisplayMetrics metrics;
     int scrWidthInPX;
     int scrHeightInPX;
+    private SliderLayout mDemoSlider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu_hyrese);
+
 
         centerPosTV = (TextView) findViewById(R.id.center_position_tv);
         overMapLayer = (RelativeLayout)findViewById(R.id.overMapLayer);
@@ -227,14 +234,29 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                                 JSONArray nearbyVehiclesJSONArray = responseJSONObject.getJSONArray("nearby_vehicles");
 
                                 List<NearbyVehicle> nearbyVehicles = gson.fromJson(responseJSONObject.getString("nearby_vehicles"), new TypeToken<List<NearbyVehicle>>(){}.getType());
-                                nearbyVehicles.get(0);
+
+                                LatLngBounds.Builder nearbyVehiclesBoundsBuilder = new LatLngBounds.Builder();
+
+                                for(int i = 0; i< nearbyVehicles.size();i++){
+                                    LatLng nearbyVehicleLatLng = new LatLng(nearbyVehicles.get(i).getLat(),nearbyVehicles.get(i).getLng());
+                                    map.addMarker( new MarkerOptions().position(nearbyVehicleLatLng));
+                                    nearbyVehiclesBoundsBuilder.include(nearbyVehicleLatLng);
+                                }
+                                int padding = scrWidthInPX/10; // offset from edges of the map in pixels
+                                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(nearbyVehiclesBoundsBuilder.build(), padding);
+                                map.animateCamera(cu);
 
                                 Dialog nearbyVehiclesDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
                                 nearbyVehiclesDialog.setContentView(R.layout.dialog_nearby_vehicles);
                                 nearbyVehiclesDialog.getWindow().getAttributes().height = scrHeightInPX/2;
                                 nearbyVehiclesDialog.getWindow().getAttributes().gravity = Gravity.BOTTOM;
                                 nearbyVehiclesDialog.getWindow().getAttributes().flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
-
+                                nearbyVehiclesDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                                    @Override
+                                    public void onDismiss(DialogInterface dialog) {
+                                        map.clear();
+                                    }
+                                });
                                 ListView nearbyVehiclesLV = (ListView) nearbyVehiclesDialog.findViewById(R.id.nearbyVehiclesLV);
                                 nearbyVehiclesLV.setAdapter(new NearbyVehiclesAdapter(nearbyVehicles, MenuHyreseActivity.this));
 
