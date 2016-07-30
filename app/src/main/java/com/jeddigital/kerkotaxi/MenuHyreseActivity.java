@@ -283,6 +283,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                                     dots.add(dot);
                                 }
                                 highlightDotATIndex(dots, 0);
+                                highlightMArkerATIndex(nearbyVehiclesMarkers, 0);
                                 nearbyVehiclesViewpager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
                                     @Override
                                     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
@@ -290,6 +291,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                                     public void onPageSelected(int position) {
                                         nearbyVehiclesMarkers.get(position).showInfoWindow();
                                         highlightDotATIndex(dots, position);
+                                        highlightMArkerATIndex(nearbyVehiclesMarkers, position);
                                     }
                                     @Override
                                     public void onPageScrollStateChanged(int state) {}
@@ -516,5 +518,12 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             dot.setTextColor(getResources().getColor(R.color.viewpager_pasive_dot));
         }
         dots.get(index).setTextColor(getResources().getColor(R.color.viewpager_active_dot));
+    }
+
+    private void highlightMArkerATIndex(List<Marker> markers, int index){
+        for(Marker marker: markers){
+            marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi_pin));
+        }
+        markers.get(index).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.highlighted_taxi_pin));
     }
 }
