@@ -1,9 +1,9 @@
 package com.jeddigital.kerkotaxi;
 
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
@@ -13,16 +13,15 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
+import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.ListView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -44,14 +43,15 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import com.jeddigital.kerkotaxi.Adapters.NearbyVehiclesAdapter;
 import com.jeddigital.kerkotaxi.Adapters.NearbyVehiclesViewPagerAdapter;
 import com.jeddigital.kerkotaxi.AndroidRestClientApi.Configurations;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
@@ -62,6 +62,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -82,7 +83,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     int scrWidthInPX;
     int scrHeightInPX;
 
-    ViewPager nearbyVehiclesViewpager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,13 +93,14 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         centerPosTV = (TextView) findViewById(R.id.center_position_tv);
         overMapLayer = (RelativeLayout)findViewById(R.id.overMapLayer);
         kerkoTaxoBTN = (Button) findViewById(R.id.kerko_taxi_btn);
-        nearbyVehiclesViewpager = (ViewPager) findViewById(R.id.view_pager);
 
 
         metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         scrWidthInPX = metrics.widthPixels;
         scrHeightInPX = metrics.heightPixels;
+
+
 
         geocoder = new Geocoder(this, Locale.getDefault());
 
@@ -239,12 +240,16 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                                 List<NearbyVehicle> nearbyVehicles = gson.fromJson(responseJSONObject.getString("nearby_vehicles"), new TypeToken<List<NearbyVehicle>>(){}.getType());
 
                                 LatLngBounds.Builder nearbyVehiclesBoundsBuilder = new LatLngBounds.Builder();
+                                final List<Marker> nearbyVehiclesMarkers = new ArrayList<Marker>();
 
                                 for(int i = 0; i< nearbyVehicles.size();i++){
                                     LatLng nearbyVehicleLatLng = new LatLng(nearbyVehicles.get(i).getLat(),nearbyVehicles.get(i).getLng());
-                                    map.addMarker( new MarkerOptions().position(nearbyVehicleLatLng));
+                                    Marker nearbyVehicleMarker = map.addMarker( new MarkerOptions().position(nearbyVehicleLatLng));
+                                    nearbyVehicleMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi_pin));
+                                    nearbyVehiclesMarkers.add(nearbyVehicleMarker);
                                     nearbyVehiclesBoundsBuilder.include(nearbyVehicleLatLng);
                                 }
+                                map.setPadding(0,0,0,scrHeightInPX/2);
                                 int padding = scrWidthInPX/10; // offset from edges of the map in pixels
                                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(nearbyVehiclesBoundsBuilder.build(), padding);
                                 map.animateCamera(cu);
@@ -257,17 +262,38 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                                 nearbyVehiclesDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                                     @Override
                                     public void onDismiss(DialogInterface dialog) {
+                                        map.setPadding(0,0,0,0);
                                         map.clear();
                                     }
                                 });
-                                ListView nearbyVehiclesLV = (ListView) nearbyVehiclesDialog.findViewById(R.id.nearbyVehiclesLV);
-                                nearbyVehiclesLV.setAdapter(new NearbyVehiclesAdapter(nearbyVehicles, MenuHyreseActivity.this));
 
                                 nearbyVehiclesDialog.show();
 
                                 //------------------------------------
 
                                 NearbyVehiclesViewPagerAdapter nearbyVehiclesViewPagerAdapter = new NearbyVehiclesViewPagerAdapter(nearbyVehicles, MenuHyreseActivity.this);
+                                ViewPager nearbyVehiclesViewpager = (ViewPager) nearbyVehiclesDialog.findViewById(R.id.view_pager);
+                                LinearLayout dotsLayout = (LinearLayout) nearbyVehiclesDialog.findViewById(R.id.dots_layout);
+                                final List<TextView> dots = new ArrayList<TextView>();
+                                for(int i =0; i<nearbyVehicles.size();i++){
+                                    TextView dot = new TextView(MenuHyreseActivity.this);
+                                    dot.setText(Html.fromHtml("&#8226;"));
+                                    dot.setTextSize(35);
+                                    dotsLayout.addView(dot);
+                                    dots.add(dot);
+                                }
+                                highlightDotATIndex(dots, 0);
+                                nearbyVehiclesViewpager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+                                    @Override
+                                    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+                                    @Override
+                                    public void onPageSelected(int position) {
+                                        nearbyVehiclesMarkers.get(position).showInfoWindow();
+                                        highlightDotATIndex(dots, position);
+                                    }
+                                    @Override
+                                    public void onPageScrollStateChanged(int state) {}
+                                });
                                 nearbyVehiclesViewpager.setAdapter(nearbyVehiclesViewPagerAdapter);
 
                             }
@@ -456,7 +482,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if(event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE){
-                    centerPosTV.setText("...");
+                    centerPosTV.setText(getResources().getString(R.string.searching_place_text));
                 }
                 return false;
             }
@@ -485,4 +511,10 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     }
 
+    private void highlightDotATIndex(List<TextView> dots, int index){
+        for(TextView dot : dots){
+            dot.setTextColor(getResources().getColor(R.color.viewpager_pasive_dot));
+        }
+        dots.get(index).setTextColor(getResources().getColor(R.color.viewpager_active_dot));
+    }
 }
