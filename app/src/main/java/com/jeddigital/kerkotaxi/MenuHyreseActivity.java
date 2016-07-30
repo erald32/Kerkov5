@@ -246,6 +246,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                                     LatLng nearbyVehicleLatLng = new LatLng(nearbyVehicles.get(i).getLat(),nearbyVehicles.get(i).getLng());
                                     Marker nearbyVehicleMarker = map.addMarker( new MarkerOptions().position(nearbyVehicleLatLng));
                                     nearbyVehicleMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi_pin));
+                                    nearbyVehicleMarker.setTitle("Lorem ipsum");
                                     nearbyVehiclesMarkers.add(nearbyVehicleMarker);
                                     nearbyVehiclesBoundsBuilder.include(nearbyVehicleLatLng);
                                 }
@@ -525,5 +526,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi_pin));
         }
         markers.get(index).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.highlighted_taxi_pin));
+        markers.get(index).showInfoWindow();
     }
 }

@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Kerko Taxi</string>
     <string name="title_activity_menu_hyrese">Kerko Taxi</string>
-    <string name="kerko_taxi">kerko_taxi</string>
+    <string name="kerko_taxi">Kërko Taxi</string>
     <string name="searching_place_text">...</string>
 </resources>

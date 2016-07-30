@@ -4,6 +4,7 @@
     android:layout_height="wrap_content">
 
     <RelativeLayout
+        android:id="@+id/car_details_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/listview_item_dialog_nearby_vehicles"
@@ -69,4 +70,12 @@
                 android:textColor="#ffffff" />
         </LinearLayout>
     </RelativeLayout>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:text="@string/kerko_taxi"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/car_details_container"/>
 </RelativeLayout>
