@@ -72,10 +72,11 @@
     </RelativeLayout>
 
     <Button
+        android:id="@+id/take_me_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="15dp"
-        android:text="@string/kerko_taxi"
+        android:text="@string/come_and_take_me"
         android:layout_centerHorizontal="true"
         android:layout_below="@+id/car_details_container"/>
 </RelativeLayout>

@@ -3,7 +3,6 @@ package com.jeddigital.kerkotaxi;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
@@ -24,6 +23,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkError;
@@ -49,17 +49,14 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import com.jeddigital.kerkotaxi.Adapters.NearbyVehiclesViewPagerAdapter;
+import com.jeddigital.kerkotaxi.AndroidRestClientApi.AndroidRestClientApiMethods;
 import com.jeddigital.kerkotaxi.AndroidRestClientApi.Configurations;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
-import com.jeddigital.kerkotaxi.GSON.BooleanTypeAdapter;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -72,10 +69,10 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     private GoogleMap map;
     Location client_live_location;
-    Gson gson;
     Geocoder geocoder;
     TextView centerPosTV;
     RelativeLayout overMapLayer;
+    RelativeLayout takeMeHereContainer;
 
     Button kerkoTaxoBTN;
 
@@ -83,6 +80,8 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     int scrWidthInPX;
     int scrHeightInPX;
 
+    static HashMap<Integer,Marker> nearbyVehiclesMarkers = new HashMap<Integer, Marker>();
+    AndroidRestClientApiMethods restApiMethods;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,20 +92,18 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         centerPosTV = (TextView) findViewById(R.id.center_position_tv);
         overMapLayer = (RelativeLayout)findViewById(R.id.overMapLayer);
         kerkoTaxoBTN = (Button) findViewById(R.id.kerko_taxi_btn);
-
+        takeMeHereContainer = (RelativeLayout) findViewById(R.id.take_me_here_container);
 
         metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         scrWidthInPX = metrics.widthPixels;
         scrHeightInPX = metrics.heightPixels;
 
+        restApiMethods = new AndroidRestClientApiMethods(this);
+
 
 
         geocoder = new Geocoder(this, Locale.getDefault());
-
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(boolean.class, new BooleanTypeAdapter());
-        gson = builder.create();
 
 
         if (!isGooglePlayServicesAvailable()) {
@@ -214,195 +211,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         requestQueue.add(postRequest);
     }
 
-    private void rest_get_nearby_vehicles(Location location, final String client_id) {
-        //  SharedPreferences Preferencat_Klient = getSharedPreferences(Configurations.SHARED_PREF_CLIENT, Context.MODE_PRIVATE);
-
-        // final String getNearbyTaxis= "getNearbyTaxis";
-
-        final String client_live_latitude = String.valueOf(location.getLatitude()).toString().trim();
-        final String client_live_longitude = String.valueOf(location.getLongitude()).toString().trim();
-
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.GET_NEARBY_TAXIS_URL,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-
-                        JSONObject responseJSONObject;
-                        try {
-                            responseJSONObject = new JSONObject(response);
-
-                            int error_code = responseJSONObject.getInt("error_code");
-                            String error_code_desc = responseJSONObject.getString("error_code_desc");
-
-                            if(error_code == 0){
-                                JSONArray nearbyVehiclesJSONArray = responseJSONObject.getJSONArray("nearby_vehicles");
-
-                                List<NearbyVehicle> nearbyVehicles = gson.fromJson(responseJSONObject.getString("nearby_vehicles"), new TypeToken<List<NearbyVehicle>>(){}.getType());
-
-                                LatLngBounds.Builder nearbyVehiclesBoundsBuilder = new LatLngBounds.Builder();
-                                final List<Marker> nearbyVehiclesMarkers = new ArrayList<Marker>();
-
-                                for(int i = 0; i< nearbyVehicles.size();i++){
-                                    LatLng nearbyVehicleLatLng = new LatLng(nearbyVehicles.get(i).getLat(),nearbyVehicles.get(i).getLng());
-                                    Marker nearbyVehicleMarker = map.addMarker( new MarkerOptions().position(nearbyVehicleLatLng));
-                                    nearbyVehicleMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi_pin));
-                                    nearbyVehicleMarker.setTitle("Lorem ipsum");
-                                    nearbyVehiclesMarkers.add(nearbyVehicleMarker);
-                                    nearbyVehiclesBoundsBuilder.include(nearbyVehicleLatLng);
-                                }
-                                map.setPadding(0,0,0,scrHeightInPX/2);
-                                int padding = scrWidthInPX/10; // offset from edges of the map in pixels
-                                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(nearbyVehiclesBoundsBuilder.build(), padding);
-                                map.animateCamera(cu);
-
-                                Dialog nearbyVehiclesDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
-                                nearbyVehiclesDialog.setContentView(R.layout.dialog_nearby_vehicles);
-                                nearbyVehiclesDialog.getWindow().getAttributes().height = scrHeightInPX/2;
-                                nearbyVehiclesDialog.getWindow().getAttributes().gravity = Gravity.BOTTOM;
-                                nearbyVehiclesDialog.getWindow().getAttributes().flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
-                                nearbyVehiclesDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                                    @Override
-                                    public void onDismiss(DialogInterface dialog) {
-                                        map.setPadding(0,0,0,0);
-                                        map.clear();
-                                    }
-                                });
-
-                                nearbyVehiclesDialog.show();
-
-                                //------------------------------------
-
-                                NearbyVehiclesViewPagerAdapter nearbyVehiclesViewPagerAdapter = new NearbyVehiclesViewPagerAdapter(nearbyVehicles, MenuHyreseActivity.this);
-                                ViewPager nearbyVehiclesViewpager = (ViewPager) nearbyVehiclesDialog.findViewById(R.id.view_pager);
-                                LinearLayout dotsLayout = (LinearLayout) nearbyVehiclesDialog.findViewById(R.id.dots_layout);
-                                final List<TextView> dots = new ArrayList<TextView>();
-                                for(int i =0; i<nearbyVehicles.size();i++){
-                                    TextView dot = new TextView(MenuHyreseActivity.this);
-                                    dot.setText(Html.fromHtml("&#8226;"));
-                                    dot.setTextSize(35);
-                                    dotsLayout.addView(dot);
-                                    dots.add(dot);
-                                }
-                                highlightDotATIndex(dots, 0);
-                                highlightMArkerATIndex(nearbyVehiclesMarkers, 0);
-                                nearbyVehiclesViewpager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-                                    @Override
-                                    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
-                                    @Override
-                                    public void onPageSelected(int position) {
-                                        nearbyVehiclesMarkers.get(position).showInfoWindow();
-                                        highlightDotATIndex(dots, position);
-                                        highlightMArkerATIndex(nearbyVehiclesMarkers, position);
-                                    }
-                                    @Override
-                                    public void onPageScrollStateChanged(int state) {}
-                                });
-                                nearbyVehiclesViewpager.setAdapter(nearbyVehiclesViewPagerAdapter);
-
-                            }
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
-                if (error instanceof NoConnectionError) {
-                    Log.d("qqq", "NoConnectionError: " + error.getMessage());
-                } else if (error instanceof TimeoutError) {
-                } else if (error instanceof AuthFailureError) {
-                    Log.d("qqq", "AuthFailureError: " + error.getMessage());
-                } else if (error instanceof ServerError) {
-                    Log.d("qqq", "ServerError: " + error.getMessage());
-                } else if (error instanceof NetworkError) {
-                    Log.d("qqq", "NetworkError: " + error.getMessage());
-                } else if (error instanceof ParseError) {
-                    Log.d("qqq", "ParseError: " + error.getMessage());
-                }
-            }
-        }) {
-            @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String, String> params = new HashMap<>();
-
-                //params.put("getNearbyTaxis", getNearbyTaxis);
-                params.put("client_id", client_id);
-                params.put("client_lat", client_live_latitude);
-                params.put("client_lng", client_live_longitude);
-
-                Log.d("qqq send", client_live_latitude);
-                Log.d("qqq send ", client_live_longitude);
-       /*       SharedPreferences Preferencat_Klient = getSharedPreferences(Configurations.SHARED_PREF_CLIENT, Context.MODE_PRIVATE);
-                SharedPreferences.Editor set_Prefs = Preferencat_Klient.edit();
-                set_Prefs.putString(Configurations.CLIENT_LATITUDE_PREF, client_live_latitude);
-                set_Prefs.putString(Configurations.CLIENT_LONGITUDE_PREF, client_live_longitude);
-                set_Prefs.commit();
-        */
-                return params;
-            }
-        };
-        //Adding the string request to the queue
-        RequestQueue requestQueue = Volley.newRequestQueue(this);
-        requestQueue.add(stringRequest);
-    }
-
-    private void rest_request_taxi(final int vehicle_id, final String client_id, final LatLng requested_location) {
-
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.REQUEST_TAXI_URL,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-
-                        JSONObject responseJSONObject;
-                        try {
-                            responseJSONObject = new JSONObject(response);
-
-                            int error_code = responseJSONObject.getInt("error_code");
-                            String error_code_desc = responseJSONObject.getString("error_code_desc");
-
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
-                if (error instanceof NoConnectionError) {
-                    Log.d("qqq", "NoConnectionError: " + error.getMessage());
-                } else if (error instanceof TimeoutError) {
-                } else if (error instanceof AuthFailureError) {
-                    Log.d("qqq", "AuthFailureError: " + error.getMessage());
-                } else if (error instanceof ServerError) {
-                    Log.d("qqq", "ServerError: " + error.getMessage());
-                } else if (error instanceof NetworkError) {
-                    Log.d("qqq", "NetworkError: " + error.getMessage());
-                } else if (error instanceof ParseError) {
-                    Log.d("qqq", "ParseError: " + error.getMessage());
-                }
-            }
-        }) {
-            @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String, String> params = new HashMap<>();
-
-                //params.put("getNearbyTaxis", getNearbyTaxis);
-                params.put("client_id", client_id);
-                params.put("vehicle_id", ""+vehicle_id);
-                params.put("requested_lat", ""+requested_location.latitude);
-                params.put("requested_lat", ""+requested_location.longitude);
-
-                return params;
-            }
-        };
-        //Adding the string request to the queue
-        RequestQueue requestQueue = Volley.newRequestQueue(this);
-        requestQueue.add(stringRequest);
-    }
-
     private void rest_cancel_request(final int booking_id, final int vehicle_id) {
 
         StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.CANCEL_REQUEST_URL,
@@ -494,7 +302,11 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         kerkoTaxoBTN.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                rest_get_nearby_vehicles(client_live_location, "1");
+                takeMeHereContainer.setVisibility(View.INVISIBLE);
+                Marker requestedPositionMarker = map.addMarker(new MarkerOptions().position(map.getCameraPosition().target));
+                requestedPositionMarker.setTitle("Lorem");
+                requestedPositionMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.client_pin));
+                restApiMethods.getNearbyVehicles(map.getCameraPosition().target, "1");
             }
         });
     }
@@ -514,18 +326,93 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     }
 
-    private void highlightDotATIndex(List<TextView> dots, int index){
-        for(TextView dot : dots){
-            dot.setTextColor(getResources().getColor(R.color.viewpager_pasive_dot));
+    private void highlightDotWithId(HashMap<Integer, TextView> dots, int id){
+        for(Map.Entry<Integer, TextView> entry : dots.entrySet()) {
+            Integer key = entry.getKey();
+            TextView textView = entry.getValue();
+            textView.setTextColor(getResources().getColor(R.color.viewpager_pasive_dot));
         }
-        dots.get(index).setTextColor(getResources().getColor(R.color.viewpager_active_dot));
+        dots.get(id).setTextColor(getResources().getColor(R.color.viewpager_active_dot));
     }
 
-    private void highlightMArkerATIndex(List<Marker> markers, int index){
-        for(Marker marker: markers){
+    private void highlightMarkerWithId(HashMap<Integer,Marker> markers, int id){
+        for(Map.Entry<Integer, Marker> entry : markers.entrySet()) {
+            Integer key = entry.getKey();
+            Marker marker = entry.getValue();
             marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi_pin));
         }
-        markers.get(index).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.highlighted_taxi_pin));
-        markers.get(index).showInfoWindow();
+        markers.get(id).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.highlighted_taxi_pin));
+        markers.get(id).showInfoWindow();
+    }
+
+
+    public void showNearByVehiclesAction(final List<NearbyVehicle> nearbyVehicles, final  LatLng requestedLocation){
+        LatLngBounds.Builder nearbyVehiclesBoundsBuilder = new LatLngBounds.Builder();
+        nearbyVehiclesMarkers.clear();
+
+        for(int i = 0; i< nearbyVehicles.size();i++){
+            LatLng nearbyVehicleLatLng = new LatLng(nearbyVehicles.get(i).getLat(),nearbyVehicles.get(i).getLng());
+            Marker nearbyVehicleMarker = map.addMarker( new MarkerOptions().position(nearbyVehicleLatLng));
+            nearbyVehicleMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi_pin));
+            nearbyVehicleMarker.setTitle("Lorem ipsum");
+            nearbyVehiclesMarkers.put(nearbyVehicles.get(i).getId(), nearbyVehicleMarker);
+            nearbyVehiclesBoundsBuilder.include(nearbyVehicleLatLng);
+        }
+        nearbyVehiclesBoundsBuilder.include(requestedLocation);
+
+        map.setPadding(0,0,0,scrHeightInPX/2);
+        int padding = scrWidthInPX/10; // offset from edges of the map in pixels
+        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(nearbyVehiclesBoundsBuilder.build(), padding);
+        map.animateCamera(cu);
+
+        Dialog nearbyVehiclesDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
+        nearbyVehiclesDialog.setContentView(R.layout.dialog_nearby_vehicles);
+        nearbyVehiclesDialog.getWindow().getAttributes().height = scrHeightInPX/2;
+        nearbyVehiclesDialog.getWindow().getAttributes().gravity = Gravity.BOTTOM;
+        nearbyVehiclesDialog.getWindow().getAttributes().flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
+        nearbyVehiclesDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                map.setPadding(0,0,0,0);
+                map.clear();
+                map.animateCamera(CameraUpdateFactory.newLatLng(requestedLocation));
+                takeMeHereContainer.setVisibility(View.VISIBLE);
+            }
+        });
+
+        nearbyVehiclesDialog.show();
+        //------------------------------------
+
+        NearbyVehiclesViewPagerAdapter nearbyVehiclesViewPagerAdapter = new NearbyVehiclesViewPagerAdapter(nearbyVehicles, MenuHyreseActivity.this, requestedLocation);
+        ViewPager nearbyVehiclesViewpager = (ViewPager) nearbyVehiclesDialog.findViewById(R.id.view_pager);
+        LinearLayout dotsLayout = (LinearLayout) nearbyVehiclesDialog.findViewById(R.id.dots_layout);
+        final HashMap<Integer, TextView> dots = new HashMap<Integer, TextView>();
+        for(int i =0; i<nearbyVehicles.size();i++){
+            TextView dot = new TextView(MenuHyreseActivity.this);
+            dot.setText(Html.fromHtml("&#8226;"));
+            dot.setTextSize(35);
+            dotsLayout.addView(dot);
+            dots.put(nearbyVehicles.get(i).getId(), dot);
+        }
+        highlightDotWithId(dots, nearbyVehicles.get(0).getId());
+        highlightMarkerWithId(nearbyVehiclesMarkers, nearbyVehicles.get(0).getId());
+        nearbyVehiclesViewpager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+            @Override
+            public void onPageSelected(int position) {
+                nearbyVehiclesMarkers.get(nearbyVehicles.get(position).getId()).showInfoWindow();
+                highlightDotWithId(dots, nearbyVehicles.get(position).getId());
+                highlightMarkerWithId(nearbyVehiclesMarkers, nearbyVehicles.get(position).getId());
+            }
+            @Override
+            public void onPageScrollStateChanged(int state) {}
+        });
+        nearbyVehiclesViewpager.setAdapter(nearbyVehiclesViewPagerAdapter);
+    }
+
+    public void requestTaxiAction(int vehicle_id){
+        Toast.makeText(this, "error code response: ", Toast.LENGTH_SHORT).show();
+        nearbyVehiclesMarkers.get(vehicle_id).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.client_pin));
     }
 }
