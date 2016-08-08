@@ -3,12 +3,15 @@ package com.jeddigital.kerkotaxi;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
@@ -18,8 +21,12 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -56,10 +63,8 @@ import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -79,15 +84,18 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     DisplayMetrics metrics;
     int scrWidthInPX;
     int scrHeightInPX;
+    AndroidRestClientApiMethods restApiClientMethods;
 
     static HashMap<Integer,Marker> nearbyVehiclesMarkers = new HashMap<Integer, Marker>();
-    AndroidRestClientApiMethods restApiMethods;
+    Dialog nearbyVehiclesDialog;
+    Dialog requestedVehicleDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu_hyrese);
 
+        restApiClientMethods = new AndroidRestClientApiMethods(MenuHyreseActivity.this);
 
         centerPosTV = (TextView) findViewById(R.id.center_position_tv);
         overMapLayer = (RelativeLayout)findViewById(R.id.overMapLayer);
@@ -98,8 +106,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         scrWidthInPX = metrics.widthPixels;
         scrHeightInPX = metrics.heightPixels;
-
-        restApiMethods = new AndroidRestClientApiMethods(this);
 
 
 
@@ -131,12 +137,16 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         client_live_location = locationManager.getLastKnownLocation(bestProvider);
         if (client_live_location != null) {
             onLocationChanged(client_live_location);
+            LatLng currentLocation = new LatLng(client_live_location.getLatitude(),client_live_location.getLongitude());
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15.0F));
         }
 
         locationManager.requestLocationUpdates(bestProvider, 10000, 0, this);
 
         setListenersToUIElements();
 
+
+        showArrivingTaxiDialog();
     //  rest_update_client_location(client_live_location, "1");
     //  get_name_for_location(new LatLng(41.325935, 19.818081));
     }
@@ -157,7 +167,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         double client_latitude = client_live_location.getLatitude();
         double client_longitude = client_live_location.getLongitude();
         LatLng latLng = new LatLng(client_latitude, client_longitude);
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom((latLng), 14.0F));
 
         //rest_update_client_location(client_live_location, "1");
         Log.d("Location changed","yes");
@@ -302,11 +311,13 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         kerkoTaxoBTN.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                kerkoTaxoBTN.setVisibility(View.INVISIBLE);
                 takeMeHereContainer.setVisibility(View.INVISIBLE);
                 Marker requestedPositionMarker = map.addMarker(new MarkerOptions().position(map.getCameraPosition().target));
                 requestedPositionMarker.setTitle("Lorem");
                 requestedPositionMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.client_pin));
-                restApiMethods.getNearbyVehicles(map.getCameraPosition().target, "1");
+                restApiClientMethods.getNearbyVehicles(map.getCameraPosition().target, "1");
+
             }
         });
     }
@@ -350,69 +361,150 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         LatLngBounds.Builder nearbyVehiclesBoundsBuilder = new LatLngBounds.Builder();
         nearbyVehiclesMarkers.clear();
 
-        for(int i = 0; i< nearbyVehicles.size();i++){
-            LatLng nearbyVehicleLatLng = new LatLng(nearbyVehicles.get(i).getLat(),nearbyVehicles.get(i).getLng());
-            Marker nearbyVehicleMarker = map.addMarker( new MarkerOptions().position(nearbyVehicleLatLng));
-            nearbyVehicleMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi_pin));
-            nearbyVehicleMarker.setTitle("Lorem ipsum");
-            nearbyVehiclesMarkers.put(nearbyVehicles.get(i).getId(), nearbyVehicleMarker);
-            nearbyVehiclesBoundsBuilder.include(nearbyVehicleLatLng);
+
+        if(nearbyVehicles.size() > 0){
+            for(int i = 0; i< nearbyVehicles.size();i++){
+                LatLng nearbyVehicleLatLng = new LatLng(nearbyVehicles.get(i).getLat(),nearbyVehicles.get(i).getLng());
+                Marker nearbyVehicleMarker = map.addMarker( new MarkerOptions().position(nearbyVehicleLatLng));
+                nearbyVehicleMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi_pin));
+                nearbyVehicleMarker.setTitle("Lorem ipsum");
+                nearbyVehiclesMarkers.put(nearbyVehicles.get(i).getId(), nearbyVehicleMarker);
+                nearbyVehiclesBoundsBuilder.include(nearbyVehicleLatLng);
+            }
+            nearbyVehiclesBoundsBuilder.include(requestedLocation);
+
+            map.setPadding(0,0,0,scrHeightInPX/2);
+            int padding = scrWidthInPX/10; // offset from edges of the map in pixels
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(nearbyVehiclesBoundsBuilder.build(), padding);
+            map.animateCamera(cu);
+
+            nearbyVehiclesDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
+            nearbyVehiclesDialog.setContentView(R.layout.dialog_nearby_vehicles);
+            nearbyVehiclesDialog.getWindow().getAttributes().height = scrHeightInPX/2;
+            nearbyVehiclesDialog.getWindow().getAttributes().gravity = Gravity.BOTTOM;
+            nearbyVehiclesDialog.getWindow().getAttributes().flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
+            nearbyVehiclesDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    map.setPadding(0,0,0,0);
+                    map.clear();
+                    map.animateCamera(CameraUpdateFactory.newLatLng(requestedLocation));
+                    kerkoTaxoBTN.setVisibility(View.VISIBLE);
+                    takeMeHereContainer.setVisibility(View.VISIBLE);
+                }
+            });
+
+            nearbyVehiclesDialog.show();
+            //------------------------------------
+
+            NearbyVehiclesViewPagerAdapter nearbyVehiclesViewPagerAdapter = new NearbyVehiclesViewPagerAdapter(nearbyVehicles, MenuHyreseActivity.this, requestedLocation);
+            ViewPager nearbyVehiclesViewpager = (ViewPager) nearbyVehiclesDialog.findViewById(R.id.view_pager);
+            LinearLayout dotsLayout = (LinearLayout) nearbyVehiclesDialog.findViewById(R.id.dots_layout);
+            final HashMap<Integer, TextView> dots = new HashMap<Integer, TextView>();
+            for(int i =0; i<nearbyVehicles.size();i++){
+                TextView dot = new TextView(MenuHyreseActivity.this);
+                dot.setText(Html.fromHtml("&#8226;"));
+                dot.setTextSize(35);
+                dotsLayout.addView(dot);
+                dots.put(nearbyVehicles.get(i).getId(), dot);
+            }
+                highlightDotWithId(dots, nearbyVehicles.get(0).getId());
+                highlightMarkerWithId(nearbyVehiclesMarkers, nearbyVehicles.get(0).getId());
+
+            nearbyVehiclesViewpager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+                @Override
+                public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+                @Override
+                public void onPageSelected(int position) {
+                    nearbyVehiclesMarkers.get(nearbyVehicles.get(position).getId()).showInfoWindow();
+                    highlightDotWithId(dots, nearbyVehicles.get(position).getId());
+                    highlightMarkerWithId(nearbyVehiclesMarkers, nearbyVehicles.get(position).getId());
+                }
+                @Override
+                public void onPageScrollStateChanged(int state) {}
+            });
+            nearbyVehiclesViewpager.setAdapter(nearbyVehiclesViewPagerAdapter);
+
+        }else{
+            kerkoTaxoBTN.setVisibility(View.VISIBLE);
+            takeMeHereContainer.setVisibility(View.VISIBLE);
+            map.clear();
+            Toast.makeText(MenuHyreseActivity.this, "Nuk u gjet asnjë makine e disponueshme për momentin", Toast.LENGTH_LONG).show();
         }
-        nearbyVehiclesBoundsBuilder.include(requestedLocation);
+    }
 
-        map.setPadding(0,0,0,scrHeightInPX/2);
-        int padding = scrWidthInPX/10; // offset from edges of the map in pixels
-        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(nearbyVehiclesBoundsBuilder.build(), padding);
-        map.animateCamera(cu);
+    public void requestTaxiAction(int vehicle_id, int error_code){
 
-        Dialog nearbyVehiclesDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
-        nearbyVehiclesDialog.setContentView(R.layout.dialog_nearby_vehicles);
-        nearbyVehiclesDialog.getWindow().getAttributes().height = scrHeightInPX/2;
-        nearbyVehiclesDialog.getWindow().getAttributes().gravity = Gravity.BOTTOM;
-        nearbyVehiclesDialog.getWindow().getAttributes().flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
-        nearbyVehiclesDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                kerkoTaxoBTN.setVisibility(View.INVISIBLE);
+                takeMeHereContainer.setVisibility(View.INVISIBLE);
+            }
+        },500);
+        nearbyVehiclesDialog.cancel();
+        requestedVehicleDialog = new Dialog(MenuHyreseActivity.this, R.style.RequestTaxiDialogAnim);
+        requestedVehicleDialog.setContentView(R.layout.dialog_requested_vehicle);
+        requestedVehicleDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        requestedVehicleDialog.setCancelable(false);
+        requestedVehicleDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
                 map.setPadding(0,0,0,0);
                 map.clear();
-                map.animateCamera(CameraUpdateFactory.newLatLng(requestedLocation));
-                takeMeHereContainer.setVisibility(View.VISIBLE);
             }
         });
 
-        nearbyVehiclesDialog.show();
-        //------------------------------------
+        requestedVehicleDialog.show();
 
-        NearbyVehiclesViewPagerAdapter nearbyVehiclesViewPagerAdapter = new NearbyVehiclesViewPagerAdapter(nearbyVehicles, MenuHyreseActivity.this, requestedLocation);
-        ViewPager nearbyVehiclesViewpager = (ViewPager) nearbyVehiclesDialog.findViewById(R.id.view_pager);
-        LinearLayout dotsLayout = (LinearLayout) nearbyVehiclesDialog.findViewById(R.id.dots_layout);
-        final HashMap<Integer, TextView> dots = new HashMap<Integer, TextView>();
-        for(int i =0; i<nearbyVehicles.size();i++){
-            TextView dot = new TextView(MenuHyreseActivity.this);
-            dot.setText(Html.fromHtml("&#8226;"));
-            dot.setTextSize(35);
-            dotsLayout.addView(dot);
-            dots.put(nearbyVehicles.get(i).getId(), dot);
-        }
-        highlightDotWithId(dots, nearbyVehicles.get(0).getId());
-        highlightMarkerWithId(nearbyVehiclesMarkers, nearbyVehicles.get(0).getId());
-        nearbyVehiclesViewpager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
-            @Override
-            public void onPageSelected(int position) {
-                nearbyVehiclesMarkers.get(nearbyVehicles.get(position).getId()).showInfoWindow();
-                highlightDotWithId(dots, nearbyVehicles.get(position).getId());
-                highlightMarkerWithId(nearbyVehiclesMarkers, nearbyVehicles.get(position).getId());
-            }
-            @Override
-            public void onPageScrollStateChanged(int state) {}
-        });
-        nearbyVehiclesViewpager.setAdapter(nearbyVehiclesViewPagerAdapter);
-    }
+        ImageView rotating_car = (ImageView) requestedVehicleDialog.findViewById(R.id.rotating_car);
+        Animation infinite_rotate = AnimationUtils.loadAnimation(MenuHyreseActivity.this, R.anim.full_rotation);
+        infinite_rotate.setRepeatMode(Animation.RESTART);
+        infinite_rotate.setRepeatCount(Animation.INFINITE);
+        rotating_car.startAnimation(infinite_rotate);
 
-    public void requestTaxiAction(int vehicle_id){
         Toast.makeText(this, "error code response: ", Toast.LENGTH_SHORT).show();
         nearbyVehiclesMarkers.get(vehicle_id).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.client_pin));
+    }
+
+
+    public void showRequestStatusDialog(){
+        Dialog requestStatusDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
+        requestStatusDialog.setContentView(R.layout.dialog_request_status);
+        requestStatusDialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        requestStatusDialog.setOnDismissListener(new DialogInterface.OnDismissListener(){
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+
+            }
+        });
+
+        ImageView statusImage = (ImageView) requestStatusDialog.findViewById(R.id.status_image);
+        statusImage.setImageResource(R.drawable.accepted);
+        requestStatusDialog.show();
+        requestStatusDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+    }
+
+
+    public void showArrivingTaxiDialog(){
+        Dialog arrivingTaxiDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
+        arrivingTaxiDialog.setContentView(R.layout.dialog_taxi_arriving);
+        arrivingTaxiDialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        arrivingTaxiDialog.setOnDismissListener(new DialogInterface.OnDismissListener(){
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+
+            }
+        });
+
+        arrivingTaxiDialog.getWindow().getAttributes().width = WindowManager.LayoutParams.MATCH_PARENT;
+        arrivingTaxiDialog.getWindow().getAttributes().gravity = Gravity.BOTTOM;
+        arrivingTaxiDialog.getWindow().getAttributes().flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
+
+
+
+        arrivingTaxiDialog.show();
+
     }
 }

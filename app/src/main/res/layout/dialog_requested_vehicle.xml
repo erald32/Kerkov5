@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
+    <RelativeLayout
+        android:id="@+id/rotating_car_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/info_content"
+        android:layout_alignLeft="@+id/info_content"
+        android:layout_alignRight="@+id/info_content"
+        android:layout_alignTop="@+id/info_content">
+
+        <ImageView
+            android:layout_margin="43dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/request_taxi_white_circle"
+            android:layout_centerInParent="true"/>
+
+        <ImageView
+            android:id="@+id/rotating_car"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/rotating_car" />
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/info_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="90dp">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:layout_marginTop="10dp"
+                android:id="@+id/driver_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:src="@drawable/driver_badge" />
+
+            <ImageView
+                android:id="@+id/driver_pic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/driver_badge"
+                android:layout_alignLeft="@+id/driver_badge"
+                android:layout_alignRight="@+id/driver_badge"
+                android:layout_alignTop="@+id/driver_badge" />
+
+        </RelativeLayout>
+
+        <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
+            android:id="@+id/emer_shoferi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EMRI SHOFERIT"
+            android:textColor="#000" />
+
+        <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:textStyle="italic"
+            android:gravity="center"
+            android:lines="2"
+            android:layout_marginBottom="15dp"
+            android:text="NË PRITJE TË KONFIRMIMIT\nNGA SHOFERI"
+            android:textColor="#ffcd00" />
+
+
+    </LinearLayout>
+
+
+</RelativeLayout>

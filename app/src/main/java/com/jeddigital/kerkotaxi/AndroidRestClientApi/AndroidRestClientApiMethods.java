@@ -128,7 +128,7 @@ public class AndroidRestClientApiMethods {
                             int error_code = responseJSONObject.getInt("error_code");
                             String error_code_desc = responseJSONObject.getString("error_code_desc");
 
-                            ((MenuHyreseActivity)context).requestTaxiAction(vehicle_id);
+                            ((MenuHyreseActivity)context).requestTaxiAction(vehicle_id, error_code);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
