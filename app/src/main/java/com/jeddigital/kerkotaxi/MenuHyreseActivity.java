@@ -87,10 +87,12 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     AndroidRestClientApiMethods restApiClientMethods;
 
     static HashMap<Integer,Marker> nearbyVehiclesMarkers = new HashMap<Integer, Marker>();
-    Dialog nearbyVehiclesDialog;
     Dialog requestedVehicleDialog;
     Dialog requestStatusDialog;
-    Dialog activeBookingDialog;
+    RelativeLayout activeBookingDialog;
+    LinearLayout nearbyVehiclesDialog;
+
+    ImageView nearbyVehiclesDialogXIcon;
 
     SharedPreferences userLoggedInPreferences;
     SharedPreferences.Editor userLoggedInPreferencesEditor;
@@ -108,18 +110,9 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         kerkoTaxiBTN = (Button) findViewById(R.id.kerko_taxi_btn);
         takeMeHereContainer = (RelativeLayout) findViewById(R.id.take_me_here_container);
 
-        activeBookingDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
-        activeBookingDialog.setContentView(R.layout.dialog_taxi_arriving);
-        activeBookingDialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        activeBookingDialog.setOnDismissListener(new DialogInterface.OnDismissListener(){
-            @Override
-            public void onDismiss(DialogInterface dialog) {}
-        });
-
-        activeBookingDialog.getWindow().getAttributes().width = WindowManager.LayoutParams.MATCH_PARENT;
-        activeBookingDialog.getWindow().getAttributes().gravity = Gravity.BOTTOM;
-        activeBookingDialog.getWindow().getAttributes().flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
-
+        activeBookingDialog = (RelativeLayout) findViewById(R.id.dialog_taxi_arriving);
+        nearbyVehiclesDialog = (LinearLayout) findViewById(R.id.dialog_nearby_vehicles);
+        nearbyVehiclesDialogXIcon = (ImageView) findViewById(R.id.dialog_nearby_vehicles_x_icon);
 
         handler = new Handler();
         metrics = new DisplayMetrics();
@@ -208,12 +201,12 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     }
 
     private void setListenersToUIElements(){
-        map.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
+   /*     map.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
             @Override
             public void onCameraChange(CameraPosition cameraPosition) {
                 centerPosTV.setText(get_name_for_location(cameraPosition.target));
             }
-        });
+        });*/
         overMapLayer.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -277,6 +270,17 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
 
         if(nearbyVehicles.size() > 0){
+            nearbyVehiclesDialog.setVisibility(View.VISIBLE);
+            nearbyVehiclesDialogXIcon.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    map.clear();
+                    map.animateCamera(CameraUpdateFactory.newLatLng(requestedLocation));
+                    kerkoTaxiBTN.setVisibility(View.VISIBLE);
+                    takeMeHereContainer.setVisibility(View.VISIBLE);
+                    nearbyVehiclesDialog.setVisibility(View.GONE);
+                }
+            });
             for(int i = 0; i< nearbyVehicles.size();i++){
                 LatLng nearbyVehicleLatLng = new LatLng(nearbyVehicles.get(i).getLat(),nearbyVehicles.get(i).getLng());
                 Marker nearbyVehicleMarker = map.addMarker( new MarkerOptions().position(nearbyVehicleLatLng));
@@ -287,28 +291,10 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             }
             nearbyVehiclesBoundsBuilder.include(requestedLocation);
 
-            map.setPadding(0,0,0,scrHeightInPX/2);
             int padding = scrWidthInPX/10; // offset from edges of the map in pixels
             CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(nearbyVehiclesBoundsBuilder.build(), padding);
             map.animateCamera(cu);
 
-            nearbyVehiclesDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
-            nearbyVehiclesDialog.setContentView(R.layout.dialog_nearby_vehicles);
-            nearbyVehiclesDialog.getWindow().getAttributes().height = scrHeightInPX/2;
-            nearbyVehiclesDialog.getWindow().getAttributes().gravity = Gravity.BOTTOM;
-            nearbyVehiclesDialog.getWindow().getAttributes().flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
-            nearbyVehiclesDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                @Override
-                public void onDismiss(DialogInterface dialog) {
-                    map.setPadding(0,0,0,0);
-                    map.clear();
-                    map.animateCamera(CameraUpdateFactory.newLatLng(requestedLocation));
-                    kerkoTaxiBTN.setVisibility(View.VISIBLE);
-                    takeMeHereContainer.setVisibility(View.VISIBLE);
-                }
-            });
-
-            nearbyVehiclesDialog.show();
             //------------------------------------
 
             NearbyVehiclesViewPagerAdapter nearbyVehiclesViewPagerAdapter = new NearbyVehiclesViewPagerAdapter(nearbyVehicles, MenuHyreseActivity.this, requestedLocation, new LatLng(client_live_location.getLatitude(), client_live_location.getLongitude()));
@@ -319,6 +305,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             nearbyVehiclesViewpager.setPadding(pagerPadding, 0, pagerPadding, 0);
 
             LinearLayout dotsLayout = (LinearLayout) nearbyVehiclesDialog.findViewById(R.id.dots_layout);
+            dotsLayout.removeAllViews();
             final HashMap<Integer, TextView> dots = new HashMap<Integer, TextView>();
             for(int i =0; i<nearbyVehicles.size();i++){
                 TextView dot = new TextView(MenuHyreseActivity.this);
@@ -360,7 +347,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                 takeMeHereContainer.setVisibility(View.INVISIBLE);
             }
         },500);
-        nearbyVehiclesDialog.cancel();
+        nearbyVehiclesDialog.setVisibility(View.GONE);
         requestedVehicleDialog = new Dialog(MenuHyreseActivity.this, R.style.RequestTaxiDialogAnim);
         requestedVehicleDialog.setContentView(R.layout.dialog_requested_vehicle);
         requestedVehicleDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -368,7 +355,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         requestedVehicleDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
-                map.setPadding(0,0,0,0);
                 map.clear();
             }
         });
@@ -425,13 +411,29 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                 notifyUserForChangedRequestStatus(booking_status_id);
             }else{
                 requestStatusDialog.cancel();
-                if(!activeBookingDialog.isShowing()){
-                    activeBookingDialog.show();
 
-                    Marker requestedPositionMarker = map.addMarker(new MarkerOptions().position(new LatLng(requestResponse.getClient_requested_lat(), requestResponse.getClient_requested_lng())));
-                    Marker vehicleMarker = map.addMarker(new MarkerOptions().position(new LatLng(requestResponse.getVehicle().getLat(), requestResponse.getVehicle().getLng())));
+                Marker requestedPositionMarker = null;
+                Marker vehicleMarker = null;
+                LatLngBounds.Builder routeBoundsBuilder = new LatLngBounds.Builder();
+
+                if(activeBookingDialog.getVisibility() != View.VISIBLE){//bookings dialogTable hasn't been shown, so we make first initialisations
+                    activeBookingDialog.setVisibility(View.VISIBLE);
+
+                    requestedPositionMarker = map.addMarker(new MarkerOptions().position(new LatLng(requestResponse.getClient_requested_lat(), requestResponse.getClient_requested_lng())));
+                    requestedPositionMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.client_pin));
+                    requestedPositionMarker.setTitle("Pozicioni i kërkuar");
+                    vehicleMarker = map.addMarker(new MarkerOptions().position(new LatLng(requestResponse.getVehicle().getLat(), requestResponse.getVehicle().getLng())));
+                    vehicleMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi_pin));
+                    vehicleMarker.setTitle("TAXI-ja në ardhje");
+
+                }else{
+                 //   vehicleMarker.setPosition(new LatLng(requestResponse.getVehicle().getLat(), requestResponse.getVehicle().getLng()));
                 }
 
+                routeBoundsBuilder.include(requestedPositionMarker.getPosition());
+                routeBoundsBuilder.include(vehicleMarker.getPosition());
+
+                map.moveCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), 50));
 
             }
         }else if(booking_status_id == 3){//duke pritur klientin
