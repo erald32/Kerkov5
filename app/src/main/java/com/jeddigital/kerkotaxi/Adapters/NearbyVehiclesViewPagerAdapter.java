@@ -13,6 +13,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.jeddigital.kerkotaxi.AndroidRestClientApi.AndroidRestClientApiMethods;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
 import com.jeddigital.kerkotaxi.IOTools.InternalStorageTools;
+import com.jeddigital.kerkotaxi.MenuHyreseActivity;
 import com.jeddigital.kerkotaxi.R;
 
 import java.util.List;
@@ -25,12 +26,14 @@ public class NearbyVehiclesViewPagerAdapter extends PagerAdapter {
         List<NearbyVehicle> nearbyVehicles;
         Context context;
         LatLng requestedLocation;
+        LatLng client_live_location;
         static AndroidRestClientApiMethods restApiMethods;
 
-        public NearbyVehiclesViewPagerAdapter(List<NearbyVehicle> nearbyVehicles, Context context, LatLng requestedLocation) {
+        public NearbyVehiclesViewPagerAdapter(List<NearbyVehicle> nearbyVehicles, Context context, LatLng requestedLocation, LatLng client_live_location) {
             this.context = context;
             this.nearbyVehicles = nearbyVehicles;
             this.requestedLocation = requestedLocation;
+            this.client_live_location = client_live_location;
             restApiMethods = new AndroidRestClientApiMethods(context);
         }
 
@@ -48,7 +51,8 @@ public class NearbyVehiclesViewPagerAdapter extends PagerAdapter {
             takeMeBTN.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    restApiMethods.requestTaxi(nearbyVehicles.get(position).getId(),String.valueOf(1),requestedLocation);
+                    ((MenuHyreseActivity)context).requestTaxiActionStarted(nearbyVehicles.get(position));
+                    restApiMethods.requestTaxi(nearbyVehicles.get(position).getId(),String.valueOf(1),requestedLocation, client_live_location);
                 }
             });
 
@@ -79,9 +83,10 @@ public class NearbyVehiclesViewPagerAdapter extends PagerAdapter {
             container.removeView(view);
         }
 
-    @Override
-    public float getPageWidth(int position) {
-        return super.getPageWidth(position);
+        @Override
+        public float getPageWidth(int position) {
+        return super.getPageWidth(position) * 0.85f;
     }
+
 
 }

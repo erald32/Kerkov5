@@ -10,12 +10,10 @@ public class Configurations {
     public static final String GET_NEARBY_TAXIS_URL = WEB_SERVICE_BASE_URL + "getNearbyTaxis.php";
     public static final String REQUEST_TAXI_URL = WEB_SERVICE_BASE_URL + "requestTaxi.php";
     public static final String CANCEL_REQUEST_URL = WEB_SERVICE_BASE_URL + "cancelRequest.php";
+    public static final String CHECK_REQUEST_STATUS_URL = WEB_SERVICE_BASE_URL + "checkRequestStatus.php";
 
 
 
-    public static final String RESPONSE_ERROR = "error";
-    public static final String RESPONSE_SUCCESS = "Success";
-    public static final String BOOKING_NOT_VALID = "booking_not_valid";
 
 
 }

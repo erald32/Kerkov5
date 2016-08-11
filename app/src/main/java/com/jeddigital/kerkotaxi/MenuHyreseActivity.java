@@ -2,6 +2,7 @@ package com.jeddigital.kerkotaxi;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -32,18 +33,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.NetworkError;
-import com.android.volley.NoConnectionError;
-import com.android.volley.ParseError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.ServerError;
-import com.android.volley.TimeoutError;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdate;
@@ -58,8 +47,10 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.jeddigital.kerkotaxi.Adapters.NearbyVehiclesViewPagerAdapter;
 import com.jeddigital.kerkotaxi.AndroidRestClientApi.AndroidRestClientApiMethods;
-import com.jeddigital.kerkotaxi.AndroidRestClientApi.Configurations;
+import com.jeddigital.kerkotaxi.AnroidRestModels.CheckRequestResponse;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
+import com.jeddigital.kerkotaxi.IOTools.InternalStorageTools;
+import com.jeddigital.kerkotaxi.IOTools.StorageConfigurations;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -72,6 +63,15 @@ import java.util.Map;
 
 public class MenuHyreseActivity extends FragmentActivity implements LocationListener {
 
+    private Runnable checkRequestInterval = new Runnable(){
+        public void run(){
+            restApiClientMethods.checkRequestStatus("1");
+
+            handler.postDelayed(checkRequestInterval, 1000);
+        }
+    };
+
+    Handler handler;
     private GoogleMap map;
     Location client_live_location;
     Geocoder geocoder;
@@ -79,7 +79,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     RelativeLayout overMapLayer;
     RelativeLayout takeMeHereContainer;
 
-    Button kerkoTaxoBTN;
+    Button kerkoTaxiBTN;
 
     DisplayMetrics metrics;
     int scrWidthInPX;
@@ -89,30 +89,47 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     static HashMap<Integer,Marker> nearbyVehiclesMarkers = new HashMap<Integer, Marker>();
     Dialog nearbyVehiclesDialog;
     Dialog requestedVehicleDialog;
+    Dialog requestStatusDialog;
+    Dialog activeBookingDialog;
 
+    SharedPreferences userLoggedInPreferences;
+    SharedPreferences.Editor userLoggedInPreferencesEditor;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu_hyrese);
 
         restApiClientMethods = new AndroidRestClientApiMethods(MenuHyreseActivity.this);
+        userLoggedInPreferences = getSharedPreferences(StorageConfigurations.USER_LOGGED_IN_SHARED_PREFS_KEY, MODE_PRIVATE);
+        userLoggedInPreferencesEditor = userLoggedInPreferences.edit();
 
         centerPosTV = (TextView) findViewById(R.id.center_position_tv);
         overMapLayer = (RelativeLayout)findViewById(R.id.overMapLayer);
-        kerkoTaxoBTN = (Button) findViewById(R.id.kerko_taxi_btn);
+        kerkoTaxiBTN = (Button) findViewById(R.id.kerko_taxi_btn);
         takeMeHereContainer = (RelativeLayout) findViewById(R.id.take_me_here_container);
 
+        activeBookingDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
+        activeBookingDialog.setContentView(R.layout.dialog_taxi_arriving);
+        activeBookingDialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        activeBookingDialog.setOnDismissListener(new DialogInterface.OnDismissListener(){
+            @Override
+            public void onDismiss(DialogInterface dialog) {}
+        });
+
+        activeBookingDialog.getWindow().getAttributes().width = WindowManager.LayoutParams.MATCH_PARENT;
+        activeBookingDialog.getWindow().getAttributes().gravity = Gravity.BOTTOM;
+        activeBookingDialog.getWindow().getAttributes().flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
+
+
+        handler = new Handler();
         metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         scrWidthInPX = metrics.widthPixels;
         scrHeightInPX = metrics.heightPixels;
 
-
-
         geocoder = new Geocoder(this, Locale.getDefault());
 
-
-        if (!isGooglePlayServicesAvailable()) {
+        if(!isGooglePlayServicesAvailable()) {
             finish();                                                                               // ketu mund ti nxjerrim nje warning qe duhet te update ose instaloje google play services
         }
 
@@ -145,9 +162,9 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
         setListenersToUIElements();
 
-
-        showArrivingTaxiDialog();
-    //  rest_update_client_location(client_live_location, "1");
+    //  showArrivingTaxiDialog();
+    //  showRequestStatusDialog();
+    //  restApiClientMethods.updateClientLocation(client_live_location, "1");
     //  get_name_for_location(new LatLng(41.325935, 19.818081));
     }
 
@@ -170,107 +187,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
         //rest_update_client_location(client_live_location, "1");
         Log.d("Location changed","yes");
-    }
-
-    private void rest_update_client_location(Location location, final String client_id) {
-        final String client_live_latitude = String.valueOf(location.getLatitude()).toString().trim();
-        final String client_live_longitude = String.valueOf(location.getLongitude()).toString().trim();
-
-        StringRequest postRequest = new StringRequest(Request.Method.POST, Configurations.UPDATE_KLIENT_LOCATION_URL,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            JSONObject jsonResponse = new JSONObject(response);
-                            int error_code = jsonResponse.getInt("error_code");
-                            String error_code_desc = jsonResponse.getString("error_code_desc");
-                            if (error_code == 0) {
-                                Log.d("qqq", "koordinatat u derguan me sukses");
-                            } else {
-                                Log.d("qqq", error_code_desc);
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        error.printStackTrace();
-                    }
-                }
-        ) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                // the POST parameters:
-                params.put("client_id", client_id);
-                params.put("client_lat", client_live_latitude);
-                params.put("client_lng", client_live_longitude);
-
-                Log.d("qqq_liveLocation_params", client_live_latitude);
-                Log.d("qqq_liveLocation_params", client_live_longitude);
-
-                return params;
-            }
-        };
-        //Adding the string request to the queue
-        RequestQueue requestQueue = Volley.newRequestQueue(this);
-        requestQueue.add(postRequest);
-    }
-
-    private void rest_cancel_request(final int booking_id, final int vehicle_id) {
-
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, Configurations.CANCEL_REQUEST_URL,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-
-                        JSONObject responseJSONObject;
-                        try {
-                            responseJSONObject = new JSONObject(response);
-
-                            int error_code = responseJSONObject.getInt("error_code");
-                            String error_code_desc = responseJSONObject.getString("error_code_desc");
-
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
-                if (error instanceof NoConnectionError) {
-                    Log.d("qqq", "NoConnectionError: " + error.getMessage());
-                } else if (error instanceof TimeoutError) {
-                } else if (error instanceof AuthFailureError) {
-                    Log.d("qqq", "AuthFailureError: " + error.getMessage());
-                } else if (error instanceof ServerError) {
-                    Log.d("qqq", "ServerError: " + error.getMessage());
-                } else if (error instanceof NetworkError) {
-                    Log.d("qqq", "NetworkError: " + error.getMessage());
-                } else if (error instanceof ParseError) {
-                    Log.d("qqq", "ParseError: " + error.getMessage());
-                }
-            }
-        }) {
-            @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String, String> params = new HashMap<>();
-
-                //params.put("getNearbyTaxis", getNearbyTaxis);
-                params.put("booking_id", ""+booking_id);
-                params.put("vehicle_id", ""+vehicle_id);
-
-                return params;
-            }
-        };
-        //Adding the string request to the queue
-        RequestQueue requestQueue = Volley.newRequestQueue(this);
-        requestQueue.add(stringRequest);
     }
 
     private String get_name_for_location(LatLng location) {
@@ -308,16 +224,15 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             }
         });
 
-        kerkoTaxoBTN.setOnClickListener(new View.OnClickListener() {
+        kerkoTaxiBTN.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                kerkoTaxoBTN.setVisibility(View.INVISIBLE);
+                kerkoTaxiBTN.setVisibility(View.INVISIBLE);
                 takeMeHereContainer.setVisibility(View.INVISIBLE);
                 Marker requestedPositionMarker = map.addMarker(new MarkerOptions().position(map.getCameraPosition().target));
                 requestedPositionMarker.setTitle("Lorem");
                 requestedPositionMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.client_pin));
                 restApiClientMethods.getNearbyVehicles(map.getCameraPosition().target, "1");
-
             }
         });
     }
@@ -356,7 +271,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         markers.get(id).showInfoWindow();
     }
 
-
     public void showNearByVehiclesAction(final List<NearbyVehicle> nearbyVehicles, final  LatLng requestedLocation){
         LatLngBounds.Builder nearbyVehiclesBoundsBuilder = new LatLngBounds.Builder();
         nearbyVehiclesMarkers.clear();
@@ -389,7 +303,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                     map.setPadding(0,0,0,0);
                     map.clear();
                     map.animateCamera(CameraUpdateFactory.newLatLng(requestedLocation));
-                    kerkoTaxoBTN.setVisibility(View.VISIBLE);
+                    kerkoTaxiBTN.setVisibility(View.VISIBLE);
                     takeMeHereContainer.setVisibility(View.VISIBLE);
                 }
             });
@@ -397,8 +311,13 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             nearbyVehiclesDialog.show();
             //------------------------------------
 
-            NearbyVehiclesViewPagerAdapter nearbyVehiclesViewPagerAdapter = new NearbyVehiclesViewPagerAdapter(nearbyVehicles, MenuHyreseActivity.this, requestedLocation);
+            NearbyVehiclesViewPagerAdapter nearbyVehiclesViewPagerAdapter = new NearbyVehiclesViewPagerAdapter(nearbyVehicles, MenuHyreseActivity.this, requestedLocation, new LatLng(client_live_location.getLatitude(), client_live_location.getLongitude()));
             ViewPager nearbyVehiclesViewpager = (ViewPager) nearbyVehiclesDialog.findViewById(R.id.view_pager);
+            nearbyVehiclesViewpager.setClipToPadding(false);
+            int pagerPadding = (int)(scrWidthInPX * 0.1);
+            int pagerMargin = (int)(scrWidthInPX * 0.1);
+            nearbyVehiclesViewpager.setPadding(pagerPadding, 0, pagerPadding, 0);
+
             LinearLayout dotsLayout = (LinearLayout) nearbyVehiclesDialog.findViewById(R.id.dots_layout);
             final HashMap<Integer, TextView> dots = new HashMap<Integer, TextView>();
             for(int i =0; i<nearbyVehicles.size();i++){
@@ -426,19 +345,18 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             nearbyVehiclesViewpager.setAdapter(nearbyVehiclesViewPagerAdapter);
 
         }else{
-            kerkoTaxoBTN.setVisibility(View.VISIBLE);
+            kerkoTaxiBTN.setVisibility(View.VISIBLE);
             takeMeHereContainer.setVisibility(View.VISIBLE);
             map.clear();
             Toast.makeText(MenuHyreseActivity.this, "Nuk u gjet asnjë makine e disponueshme për momentin", Toast.LENGTH_LONG).show();
         }
     }
 
-    public void requestTaxiAction(int vehicle_id, int error_code){
-
-        new Handler().postDelayed(new Runnable() {
+    public void requestTaxiActionStarted(NearbyVehicle nearbyVehicle){
+       handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                kerkoTaxoBTN.setVisibility(View.INVISIBLE);
+                kerkoTaxiBTN.setVisibility(View.INVISIBLE);
                 takeMeHereContainer.setVisibility(View.INVISIBLE);
             }
         },500);
@@ -455,56 +373,152 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             }
         });
 
-        requestedVehicleDialog.show();
-
         ImageView rotating_car = (ImageView) requestedVehicleDialog.findViewById(R.id.rotating_car);
         Animation infinite_rotate = AnimationUtils.loadAnimation(MenuHyreseActivity.this, R.anim.full_rotation);
         infinite_rotate.setRepeatMode(Animation.RESTART);
         infinite_rotate.setRepeatCount(Animation.INFINITE);
         rotating_car.startAnimation(infinite_rotate);
 
-        Toast.makeText(this, "error code response: ", Toast.LENGTH_SHORT).show();
-        nearbyVehiclesMarkers.get(vehicle_id).setIcon(BitmapDescriptorFactory.fromResource(R.drawable.client_pin));
+        ImageView driverPic = (ImageView) requestedVehicleDialog.findViewById(R.id.driver_pic);
+        TextView  driverName = (TextView) requestedVehicleDialog.findViewById(R.id.driver_name);
+        Button declineBookingBtn = (Button) requestedVehicleDialog.findViewById(R.id.decline_booking);
+        declineBookingBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                restApiClientMethods.cancelRequest("1", client_live_location);
+                kerkoTaxiBTN.setVisibility(View.VISIBLE);
+                takeMeHereContainer.setVisibility(View.VISIBLE);
+            }
+        });
+
+        InternalStorageTools.getAndShowPhoto(MenuHyreseActivity.this, driverPic, nearbyVehicle.getDriver().getPhoto_url());
+        driverName.setText(nearbyVehicle.getDriver().getFirst_name() + " " + nearbyVehicle.getDriver().getLast_name());
+        requestedVehicleDialog.show();
+
     }
 
+    public void requestTaxiActionResponse(int vehicle_id, int error_code){
+        if(error_code == 0){
+            handler.post(checkRequestInterval);
 
-    public void showRequestStatusDialog(){
-        Dialog requestStatusDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
+        }else{//
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    requestedVehicleDialog.dismiss();
+                    Toast.makeText(MenuHyreseActivity.this, "Dicka shkoi keq, porosia juaj nuk u krijua", Toast.LENGTH_SHORT).show();
+                }
+            },1000);
+        }
+        Toast.makeText(this, "error code response: "+error_code, Toast.LENGTH_SHORT).show();
+    }
+
+    public void handleCheckRequestAction(CheckRequestResponse requestResponse){
+        int booking_status_id = requestResponse.getStatus_id();
+
+
+        if(booking_status_id == 1){//pending
+
+        }else if(booking_status_id == 2){//duke mare klientin
+            requestedVehicleDialog.cancel();
+            if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
+                notifyUserForChangedRequestStatus(booking_status_id);
+            }else{
+                requestStatusDialog.cancel();
+                if(!activeBookingDialog.isShowing()){
+                    activeBookingDialog.show();
+
+                    Marker requestedPositionMarker = map.addMarker(new MarkerOptions().position(new LatLng(requestResponse.getClient_requested_lat(), requestResponse.getClient_requested_lng())));
+                    Marker vehicleMarker = map.addMarker(new MarkerOptions().position(new LatLng(requestResponse.getVehicle().getLat(), requestResponse.getVehicle().getLng())));
+                }
+
+
+            }
+        }else if(booking_status_id == 3){//duke pritur klientin
+            Toast.makeText(MenuHyreseActivity.this, "Taksija ka mberitur!!", Toast.LENGTH_SHORT).show();
+        }else if(booking_status_id == 4){//me klient
+
+        }else if(booking_status_id == 5){//kompletuar
+            handler.removeCallbacks(checkRequestInterval);
+        }else if(booking_status_id == 6){//Refuzuar Nga Shoferi Ne Pending
+            requestedVehicleDialog.cancel();
+            if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
+                notifyUserForChangedRequestStatus(booking_status_id);
+            }
+            handler.removeCallbacks(checkRequestInterval);
+            Toast.makeText(MenuHyreseActivity.this, "Porosia juaj u anullua nga shoferi", Toast.LENGTH_SHORT).show();
+        }else if(booking_status_id == 7){//Refuzuar Nga Klienti Ne Pending
+            handler.removeCallbacks(checkRequestInterval);
+        }else if(booking_status_id == 8){//Refuzuar Nga Shoferi Duke Marre Klientin
+            if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
+                notifyUserForChangedRequestStatus(booking_status_id);
+            }
+            handler.removeCallbacks(checkRequestInterval);
+        }else if(booking_status_id == 9){//Refuzuar Nga Klienti Duke Marre Klientin
+            handler.removeCallbacks(checkRequestInterval);
+        }else if(booking_status_id == 10){//Refuzuar Nga Shoferi Duke Pritur Klientin
+            if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
+                notifyUserForChangedRequestStatus(booking_status_id);
+            }
+            handler.removeCallbacks(checkRequestInterval);
+        }else if(booking_status_id == 11){//Refuzuar Nga Klienti Duke Pritur Klientin
+            if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
+                notifyUserForChangedRequestStatus(booking_status_id);
+            }
+            handler.removeCallbacks(checkRequestInterval);
+        }else if(booking_status_id == 12){//Refuzuar Nga Shoferi Me Klient
+            handler.removeCallbacks(checkRequestInterval);
+        }
+
+
+        userLoggedInPreferencesEditor.putInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, booking_status_id);
+        userLoggedInPreferencesEditor.commit();
+    }
+
+    public void cancelRequestAction(int error_code){
+        requestedVehicleDialog.cancel();
+        Toast.makeText(MenuHyreseActivity.this, "Porosia u anullua me sukses.", Toast.LENGTH_SHORT).show();
+    }
+
+    public void notifyUserForChangedRequestStatus(final int booking_status_id){
+
+        requestStatusDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
         requestStatusDialog.setContentView(R.layout.dialog_request_status);
         requestStatusDialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
         requestStatusDialog.setOnDismissListener(new DialogInterface.OnDismissListener(){
             @Override
             public void onDismiss(DialogInterface dialog) {
+                if(booking_status_id == 2){
 
+                }else{
+                    kerkoTaxiBTN.setVisibility(View.VISIBLE);
+                    takeMeHereContainer.setVisibility(View.VISIBLE);
+                }
             }
         });
-
         ImageView statusImage = (ImageView) requestStatusDialog.findViewById(R.id.status_image);
-        statusImage.setImageResource(R.drawable.accepted);
+        if(booking_status_id == 2){
+            statusImage.setImageResource(R.drawable.accepted);
+        }else{
+            statusImage.setImageResource(R.drawable.declined);
+        }
         requestStatusDialog.show();
         requestStatusDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                requestStatusDialog.cancel();
+            }
+        },5000);
     }
 
 
-    public void showArrivingTaxiDialog(){
-        Dialog arrivingTaxiDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
-        arrivingTaxiDialog.setContentView(R.layout.dialog_taxi_arriving);
-        arrivingTaxiDialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-        arrivingTaxiDialog.setOnDismissListener(new DialogInterface.OnDismissListener(){
-            @Override
-            public void onDismiss(DialogInterface dialog) {
 
-            }
-        });
+    @Override
+    protected void onStop() {
+        super.onStop();
 
-        arrivingTaxiDialog.getWindow().getAttributes().width = WindowManager.LayoutParams.MATCH_PARENT;
-        arrivingTaxiDialog.getWindow().getAttributes().gravity = Gravity.BOTTOM;
-        arrivingTaxiDialog.getWindow().getAttributes().flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
-
-
-
-        arrivingTaxiDialog.show();
-
+        handler.removeCallbacks(checkRequestInterval);
     }
 }

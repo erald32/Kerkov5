@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="#000">
     <RelativeLayout
         android:id="@+id/rotating_car_container"
         android:layout_width="wrap_content"
@@ -14,7 +15,7 @@
         android:layout_alignTop="@+id/info_content">
 
         <ImageView
-            android:layout_margin="43dp"
+            android:padding="41dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/request_taxi_white_circle"
@@ -41,7 +42,6 @@
             android:layout_height="wrap_content">
 
             <ImageView
-                android:layout_marginTop="10dp"
                 android:id="@+id/driver_badge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -61,7 +61,7 @@
         </RelativeLayout>
 
         <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
-            android:id="@+id/emer_shoferi"
+            android:id="@+id/driver_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="EMRI SHOFERIT"
@@ -70,11 +70,9 @@
         <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="50dp"
             android:textStyle="italic"
             android:gravity="center"
             android:lines="2"
-            android:layout_marginBottom="15dp"
             android:text="NË PRITJE TË KONFIRMIMIT\nNGA SHOFERI"
             android:textColor="#ffcd00" />
 
@@ -82,4 +80,11 @@
     </LinearLayout>
 
 
+    <Button
+        android:id="@+id/decline_booking"
+        android:layout_below="@+id/rotating_car_container"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Anullo Porosinë"/>
 </RelativeLayout>

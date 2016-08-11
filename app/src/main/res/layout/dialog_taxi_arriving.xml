@@ -1,142 +1,164 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@drawable/dialog_background"
-    android:orientation="vertical"
-    android:padding="10dp">
+    android:orientation="vertical">
 
-    <RelativeLayout
-        android:id="@+id/car_details_container"
+    <ImageView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="40dp"
-        android:background="@drawable/listview_item_dialog_nearby_vehicles"
-        android:padding="8dp">
+        android:layout_alignBottom="@+id/big_container"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@+id/big_container"
+        android:background="@drawable/dialog_background" />
+
+    <RelativeLayout
+        android:id="@+id/big_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="10dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingBottom="10dp">
+
 
         <RelativeLayout
-            android:id="@+id/driver_foto_container"
-            android:layout_width="110dp"
-            android:layout_height="110dp"
-            android:layout_alignBottom="@+id/vehicle_data_container"
-            android:layout_alignParentTop="true"
-            android:layout_weight="1">
+            android:id="@+id/car_details_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="40dp"
+            android:background="@drawable/listview_item_dialog_nearby_vehicles"
+            android:padding="10dp">
 
-            <ImageView
-                android:id="@+id/driver_foto"
+            <RelativeLayout
+                android:id="@+id/driver_foto_container"
+                android:layout_width="110dp"
+                android:layout_height="110dp"
+                android:layout_alignBottom="@+id/vehicle_data_container"
+                android:layout_alignParentTop="true"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:id="@+id/driver_foto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_centerInParent="true"
+                    android:paddingRight="8dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/driver_badge" />
+
+            </RelativeLayout>
+
+            <LinearLayout
+                android:id="@+id/vehicle_data_container"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_centerInParent="true"
-                android:paddingRight="8dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/driver_badge" />
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_toRightOf="@+id/driver_foto_container"
+                android:layout_weight="3"
+                android:orientation="vertical">
 
+                <TextView
+                    android:id="@+id/name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/textview_background"
+                    android:gravity="center"
+                    android:text="emer mbiemer"
+                    android:textColor="#ffffff" />
+
+                <TextView
+                    android:id="@+id/car_type"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/textview_background"
+                    android:gravity="center"
+                    android:text="tip makine"
+                    android:textColor="#ffffff" />
+
+                <TextView
+                    android:id="@+id/arrival"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="3dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/textview_background"
+                    android:gravity="center"
+                    android:text="arival time"
+                    android:textColor="#ffffff" />
+            </LinearLayout>
         </RelativeLayout>
 
         <LinearLayout
-            android:id="@+id/vehicle_data_container"
-            android:layout_width="wrap_content"
+            android:id="@+id/actions_container"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_toRightOf="@+id/driver_foto_container"
-            android:layout_weight="3"
-            android:orientation="vertical">
+            android:layout_below="@+id/car_details_container"
+            android:orientation="horizontal"
+            android:weightSum="2">
 
-            <TextView
-                android:id="@+id/name"
-                android:layout_width="match_parent"
+            <RelativeLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/textview_background"
-                android:gravity="center"
-                android:text="emer mbiemer"
-                android:textColor="#ffffff" />
+                android:layout_weight="1">
 
-            <TextView
-                android:id="@+id/car_type"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/textview_background"
-                android:gravity="center"
-                android:text="tip makine"
-                android:textColor="#ffffff" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:background="@drawable/textview_background"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="5dp">
 
-            <TextView
-                android:id="@+id/arrival"
-                android:layout_width="match_parent"
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="5dp"
+                        android:src="@drawable/telephone" />
+
+                    <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="TELEFONO SHOFERIN"
+                        android:textColor="#c2c3c4" />
+                </LinearLayout>
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="3dp"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/textview_background"
-                android:gravity="center"
-                android:text="arival time"
-                android:textColor="#ffffff" />
+                android:layout_weight="1">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:background="@drawable/textview_background"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="5dp">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="5dp"
+                        android:src="@drawable/x_icon" />
+
+                    <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TELEFONO SHOFERIN"
+                        android:textColor="#c2c3c4" />
+                </LinearLayout>
+            </RelativeLayout>
         </LinearLayout>
+
     </RelativeLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="2">
 
-        <RelativeLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:background="@drawable/textview_background"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
-
-                <ImageView
-                    android:layout_marginBottom="5dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/telephone" />
-
-                <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="TELEFONO SHOFERIN"
-                    android:textColor="#c2c3c4" />
-            </LinearLayout>
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:background="@drawable/textview_background"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="5dp">
-
-                <ImageView
-                    android:layout_marginBottom="5dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/x_icon" />
-
-                <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="TELEFONO SHOFERIN"
-                    android:textColor="#c2c3c4" />
-            </LinearLayout>
-        </RelativeLayout>
-    </LinearLayout>
-
-</LinearLayout>
+</RelativeLayout>
