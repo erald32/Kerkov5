@@ -15,7 +15,11 @@ public class Vehicle {
     @SerializedName("lng")
     public float lng;
 
-    public Vehicle(){
+    @SerializedName("distance_params")
+    DistanceParam distance_params;
+
+
+    public Vehicle() {
 
     }
 
@@ -31,9 +35,14 @@ public class Vehicle {
         return lng;
     }
 
+    public DistanceParam getDistance_params() {
+        return distance_params;
+    }
+
     public void setId(int id) {
         this.id = id;
     }
+
 
     public void setLat(float lat) {
         this.lat = lat;
@@ -41,6 +50,10 @@ public class Vehicle {
 
     public void setLng(float lng) {
         this.lng = lng;
+    }
+
+    public void setDistance_params(DistanceParam distance_params) {
+        this.distance_params = distance_params;
     }
 }
 

@@ -301,7 +301,7 @@ public class AndroidRestClientApiMethods {
                             ((MenuHyreseActivity)context).handleCheckRequestAction(requestResponse);
 
                             if (error_code == 0) {
-                                Log.e("qqq", "koordinatat u derguan me sukses");
+                                Log.e("qqq", "requesti u mor me sukses");
                             } else {
                                 Log.e("qqq", error_code_desc);
                             }

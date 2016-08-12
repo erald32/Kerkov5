@@ -19,7 +19,7 @@ public class Driver {
     @SerializedName("photo_url")
     String photo_url;
 
-    @SerializedName("driver_personal_number")
+    @SerializedName("personal_number")
     String driver_personal_number;
 
     public Driver(){

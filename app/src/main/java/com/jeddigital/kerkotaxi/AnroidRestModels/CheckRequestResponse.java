@@ -204,8 +204,10 @@ public class CheckRequestResponse {
     Double client_out_vehicle_lng;
 
     @SerializedName("vehicle")
-    Vehicle vehicle;
+    NearbyVehicle nearbyVehicle;
 
+    @SerializedName("distance_params")
+    DistanceParam distance_params;
 
     public CheckRequestResponse(){
 
@@ -471,8 +473,12 @@ public class CheckRequestResponse {
         return client_out_vehicle_lng;
     }
 
-    public Vehicle getVehicle() {
-        return vehicle;
+    public NearbyVehicle getNearbyVehicle() {
+        return nearbyVehicle;
+    }
+
+    public DistanceParam getDistance_params() {
+        return distance_params;
     }
 
     public void setId(int id) {
@@ -735,7 +741,11 @@ public class CheckRequestResponse {
         this.client_out_vehicle_lng = client_out_vehicle_lng;
     }
 
-    public void setVehicle(Vehicle vehicle) {
-        this.vehicle = vehicle;
+    public void setNearbyVehicle(NearbyVehicle nearbyVehicle) {
+        this.nearbyVehicle = nearbyVehicle;
+    }
+
+    public void setDistance_params(DistanceParam distance_params) {
+        this.distance_params = distance_params;
     }
 }

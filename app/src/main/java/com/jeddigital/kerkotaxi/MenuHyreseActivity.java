@@ -19,11 +19,9 @@ import android.support.v4.view.ViewPager;
 import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -40,7 +38,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -51,9 +48,6 @@ import com.jeddigital.kerkotaxi.AnroidRestModels.CheckRequestResponse;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
 import com.jeddigital.kerkotaxi.IOTools.InternalStorageTools;
 import com.jeddigital.kerkotaxi.IOTools.StorageConfigurations;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -67,7 +61,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         public void run(){
             restApiClientMethods.checkRequestStatus("1");
 
-            handler.postDelayed(checkRequestInterval, 1000);
+            handler.postDelayed(checkRequestInterval, 3000);
         }
     };
 
@@ -80,6 +74,9 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     RelativeLayout takeMeHereContainer;
 
     Button kerkoTaxiBTN;
+
+    Marker requestedPositionMarker;
+    Marker requestedVehicleMarker = null;
 
     DisplayMetrics metrics;
     int scrWidthInPX;
@@ -94,6 +91,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     ImageView nearbyVehiclesDialogXIcon;
 
+    TextView activeBookingDialog_ArivalTimeTV;
     SharedPreferences userLoggedInPreferences;
     SharedPreferences.Editor userLoggedInPreferencesEditor;
     @Override
@@ -113,6 +111,11 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         activeBookingDialog = (RelativeLayout) findViewById(R.id.dialog_taxi_arriving);
         nearbyVehiclesDialog = (LinearLayout) findViewById(R.id.dialog_nearby_vehicles);
         nearbyVehiclesDialogXIcon = (ImageView) findViewById(R.id.dialog_nearby_vehicles_x_icon);
+
+        activeBookingDialog_ArivalTimeTV = (TextView) activeBookingDialog.findViewById(R.id.arrival_time);
+
+        requestedVehicleDialog = new Dialog(MenuHyreseActivity.this, R.style.RequestTaxiDialogAnim);
+        requestStatusDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
 
         handler = new Handler();
         metrics = new DisplayMetrics();
@@ -155,6 +158,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
         setListenersToUIElements();
 
+        handler.post(checkRequestInterval);
     //  showArrivingTaxiDialog();
     //  showRequestStatusDialog();
     //  restApiClientMethods.updateClientLocation(client_live_location, "1");
@@ -222,8 +226,8 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             public void onClick(View v) {
                 kerkoTaxiBTN.setVisibility(View.INVISIBLE);
                 takeMeHereContainer.setVisibility(View.INVISIBLE);
-                Marker requestedPositionMarker = map.addMarker(new MarkerOptions().position(map.getCameraPosition().target));
-                requestedPositionMarker.setTitle("Lorem");
+                requestedPositionMarker = map.addMarker(new MarkerOptions().position(map.getCameraPosition().target));
+                requestedPositionMarker.setTitle("Requested location");
                 requestedPositionMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.client_pin));
                 restApiClientMethods.getNearbyVehicles(map.getCameraPosition().target, "1");
             }
@@ -348,14 +352,16 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             }
         },500);
         nearbyVehiclesDialog.setVisibility(View.GONE);
-        requestedVehicleDialog = new Dialog(MenuHyreseActivity.this, R.style.RequestTaxiDialogAnim);
         requestedVehicleDialog.setContentView(R.layout.dialog_requested_vehicle);
         requestedVehicleDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         requestedVehicleDialog.setCancelable(false);
         requestedVehicleDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
-                map.clear();
+                for (Map.Entry<Integer,Marker> entry : nearbyVehiclesMarkers.entrySet()) {
+                    Marker nearbyVehicleMarker = entry.getValue();
+                    nearbyVehicleMarker.remove();
+                }
             }
         });
 
@@ -399,44 +405,72 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         Toast.makeText(this, "error code response: "+error_code, Toast.LENGTH_SHORT).show();
     }
 
+    private void positionRequestedVehicleMarker(CheckRequestResponse requestResponse){
+        if(requestedVehicleMarker == null){
+            requestedVehicleMarker = map.addMarker(new MarkerOptions().position(new LatLng(requestResponse.getNearbyVehicle().getLat(), requestResponse.getNearbyVehicle().getLng())));
+            requestedVehicleMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.highlighted_taxi_pin));
+            requestedVehicleMarker.setTitle("TAXI-ja në ardhje");
+            requestedVehicleMarker.showInfoWindow();
+        }
+        requestedVehicleMarker.setPosition(new LatLng(requestResponse.getNearbyVehicle().getLat(), requestResponse.getNearbyVehicle().getLng()));
+    }
+
+    private void setRequestedPositionMarker(CheckRequestResponse requestResponse){
+        if(requestedPositionMarker == null){
+            requestedPositionMarker = map.addMarker(new MarkerOptions().position(new LatLng(requestResponse.getClient_requested_lat(), requestResponse.getClient_requested_lng())));
+            requestedPositionMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.client_pin));
+            requestedPositionMarker.setTitle("pozicioni i kerkuar");
+            requestedPositionMarker.showInfoWindow();
+        }
+        requestedPositionMarker.setPosition(new LatLng(requestResponse.getClient_requested_lat(), requestResponse.getClient_requested_client_lng()));
+
+    }
+
     public void handleCheckRequestAction(CheckRequestResponse requestResponse){
         int booking_status_id = requestResponse.getStatus_id();
-
+        LatLngBounds.Builder routeBoundsBuilder = new LatLngBounds.Builder();
 
         if(booking_status_id == 1){//pending
+            kerkoTaxiBTN.setVisibility(View.INVISIBLE);
+            takeMeHereContainer.setVisibility(View.INVISIBLE);
+
+            positionRequestedVehicleMarker(requestResponse);
+            setRequestedPositionMarker(requestResponse);
+
+            routeBoundsBuilder.include(requestedPositionMarker.getPosition());
+            routeBoundsBuilder.include(requestedVehicleMarker.getPosition());
+
+            if(!requestedVehicleDialog.isShowing()){
+                requestTaxiActionStarted(requestResponse.getNearbyVehicle());
+            }
 
         }else if(booking_status_id == 2){//duke mare klientin
+            kerkoTaxiBTN.setVisibility(View.INVISIBLE);
+            takeMeHereContainer.setVisibility(View.INVISIBLE);
+
             requestedVehicleDialog.cancel();
+            positionRequestedVehicleMarker(requestResponse);
+            setRequestedPositionMarker(requestResponse);
+
+            routeBoundsBuilder.include(requestedPositionMarker.getPosition());
+            routeBoundsBuilder.include(requestedVehicleMarker.getPosition());
+
             if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
                 notifyUserForChangedRequestStatus(booking_status_id);
             }else{
                 requestStatusDialog.cancel();
-
-                Marker requestedPositionMarker = null;
-                Marker vehicleMarker = null;
-                LatLngBounds.Builder routeBoundsBuilder = new LatLngBounds.Builder();
-
                 if(activeBookingDialog.getVisibility() != View.VISIBLE){//bookings dialogTable hasn't been shown, so we make first initialisations
                     activeBookingDialog.setVisibility(View.VISIBLE);
-
-                    requestedPositionMarker = map.addMarker(new MarkerOptions().position(new LatLng(requestResponse.getClient_requested_lat(), requestResponse.getClient_requested_lng())));
-                    requestedPositionMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.client_pin));
-                    requestedPositionMarker.setTitle("Pozicioni i kërkuar");
-                    vehicleMarker = map.addMarker(new MarkerOptions().position(new LatLng(requestResponse.getVehicle().getLat(), requestResponse.getVehicle().getLng())));
-                    vehicleMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.taxi_pin));
-                    vehicleMarker.setTitle("TAXI-ja në ardhje");
-
-                }else{
-                 //   vehicleMarker.setPosition(new LatLng(requestResponse.getVehicle().getLat(), requestResponse.getVehicle().getLng()));
                 }
-
-                routeBoundsBuilder.include(requestedPositionMarker.getPosition());
-                routeBoundsBuilder.include(vehicleMarker.getPosition());
-
-                map.moveCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), 50));
-
+                activeBookingDialog_ArivalTimeTV.setText(requestResponse.getNearbyVehicle().getDistance_params().getTime_readable());
             }
         }else if(booking_status_id == 3){//duke pritur klientin
+            positionRequestedVehicleMarker(requestResponse);
+            setRequestedPositionMarker(requestResponse);
+
+            routeBoundsBuilder.include(requestedPositionMarker.getPosition());
+            routeBoundsBuilder.include(requestedVehicleMarker.getPosition());
+
             Toast.makeText(MenuHyreseActivity.this, "Taksija ka mberitur!!", Toast.LENGTH_SHORT).show();
         }else if(booking_status_id == 4){//me klient
 
@@ -470,8 +504,12 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             handler.removeCallbacks(checkRequestInterval);
         }else if(booking_status_id == 12){//Refuzuar Nga Shoferi Me Klient
             handler.removeCallbacks(checkRequestInterval);
+        }else{//no booking status id -> there is no booking for this client
+            handler.removeCallbacks(checkRequestInterval);
+            return;
         }
 
+        map.moveCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), 50));
 
         userLoggedInPreferencesEditor.putInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, booking_status_id);
         userLoggedInPreferencesEditor.commit();

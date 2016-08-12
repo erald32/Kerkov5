@@ -62,7 +62,7 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/name"
+                    android:id="@+id/driver_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
@@ -82,7 +82,7 @@
                     android:textColor="#ffffff" />
 
                 <TextView
-                    android:id="@+id/arrival"
+                    android:id="@+id/arrival_time"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="3dp"
@@ -154,7 +154,7 @@
                     <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="TELEFONO SHOFERIN"
+                        android:text="ANULLO POROSINË"
                         android:textColor="#c2c3c4" />
                 </LinearLayout>
             </RelativeLayout>
