@@ -59,11 +59,13 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     private Runnable checkRequestInterval = new Runnable(){
         public void run(){
-            restApiClientMethods.checkRequestStatus("1");
+            restApiClientMethods.checkRequestStatus(clientId);
 
             handler.postDelayed(checkRequestInterval, 3000);
         }
     };
+
+    public static final String clientId = "1";
 
     Handler handler;
     private GoogleMap map;
@@ -73,6 +75,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     RelativeLayout overMapLayer;
     RelativeLayout takeMeHereContainer;
 
+    Float cameraDefaultZoom = 15.0F;
     Button kerkoTaxiBTN;
 
     Marker requestedPositionMarker;
@@ -92,6 +95,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     ImageView nearbyVehiclesDialogXIcon;
 
     TextView activeBookingDialog_ArivalTimeTV;
+    RelativeLayout activeBookingDialog_CancelBooking;
     SharedPreferences userLoggedInPreferences;
     SharedPreferences.Editor userLoggedInPreferencesEditor;
     @Override
@@ -113,7 +117,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         nearbyVehiclesDialogXIcon = (ImageView) findViewById(R.id.dialog_nearby_vehicles_x_icon);
 
         activeBookingDialog_ArivalTimeTV = (TextView) activeBookingDialog.findViewById(R.id.arrival_time);
-
+        activeBookingDialog_CancelBooking = (RelativeLayout) activeBookingDialog.findViewById(R.id.cancel_booking_RL);
         requestedVehicleDialog = new Dialog(MenuHyreseActivity.this, R.style.RequestTaxiDialogAnim);
         requestStatusDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
 
@@ -151,7 +155,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         if (client_live_location != null) {
             onLocationChanged(client_live_location);
             LatLng currentLocation = new LatLng(client_live_location.getLatitude(),client_live_location.getLongitude());
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15.0F));
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, cameraDefaultZoom));
         }
 
         locationManager.requestLocationUpdates(bestProvider, 10000, 0, this);
@@ -161,7 +165,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         handler.post(checkRequestInterval);
     //  showArrivingTaxiDialog();
     //  showRequestStatusDialog();
-    //  restApiClientMethods.updateClientLocation(client_live_location, "1");
+    //  restApiClientMethods.updateClientLocation(client_live_location, clientId);
     //  get_name_for_location(new LatLng(41.325935, 19.818081));
     }
 
@@ -182,7 +186,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         double client_longitude = client_live_location.getLongitude();
         LatLng latLng = new LatLng(client_latitude, client_longitude);
 
-        //rest_update_client_location(client_live_location, "1");
+        //rest_update_client_location(client_live_location, clientId);
         Log.d("Location changed","yes");
     }
 
@@ -229,7 +233,13 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                 requestedPositionMarker = map.addMarker(new MarkerOptions().position(map.getCameraPosition().target));
                 requestedPositionMarker.setTitle("Requested location");
                 requestedPositionMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.client_pin));
-                restApiClientMethods.getNearbyVehicles(map.getCameraPosition().target, "1");
+                restApiClientMethods.getNearbyVehicles(map.getCameraPosition().target, clientId);
+            }
+        });
+        activeBookingDialog_CancelBooking.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                restApiClientMethods.cancelRequest(clientId, client_live_location);
             }
         });
     }
@@ -377,7 +387,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         declineBookingBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                restApiClientMethods.cancelRequest("1", client_live_location);
+                restApiClientMethods.cancelRequest(clientId, client_live_location);
                 kerkoTaxiBTN.setVisibility(View.VISIBLE);
                 takeMeHereContainer.setVisibility(View.VISIBLE);
             }
@@ -412,7 +422,11 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             requestedVehicleMarker.setTitle("TAXI-ja në ardhje");
             requestedVehicleMarker.showInfoWindow();
         }
+        if(requestedVehicleMarker.isVisible()){
+            Log.d("adsas","asdas");
+        }
         requestedVehicleMarker.setPosition(new LatLng(requestResponse.getNearbyVehicle().getLat(), requestResponse.getNearbyVehicle().getLng()));
+
     }
 
     private void setRequestedPositionMarker(CheckRequestResponse requestResponse){
@@ -439,6 +453,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
             routeBoundsBuilder.include(requestedPositionMarker.getPosition());
             routeBoundsBuilder.include(requestedVehicleMarker.getPosition());
+            map.moveCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), 50));
 
             if(!requestedVehicleDialog.isShowing()){
                 requestTaxiActionStarted(requestResponse.getNearbyVehicle());
@@ -454,6 +469,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
             routeBoundsBuilder.include(requestedPositionMarker.getPosition());
             routeBoundsBuilder.include(requestedVehicleMarker.getPosition());
+            map.moveCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), 50));
 
             if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
                 notifyUserForChangedRequestStatus(booking_status_id);
@@ -465,24 +481,30 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                 activeBookingDialog_ArivalTimeTV.setText(requestResponse.getNearbyVehicle().getDistance_params().getTime_readable());
             }
         }else if(booking_status_id == 3){//duke pritur klientin
+            kerkoTaxiBTN.setVisibility(View.INVISIBLE);
+            takeMeHereContainer.setVisibility(View.INVISIBLE);
             positionRequestedVehicleMarker(requestResponse);
             setRequestedPositionMarker(requestResponse);
 
             routeBoundsBuilder.include(requestedPositionMarker.getPosition());
             routeBoundsBuilder.include(requestedVehicleMarker.getPosition());
+            map.moveCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), 50));
 
             Toast.makeText(MenuHyreseActivity.this, "Taksija ka mberitur!!", Toast.LENGTH_SHORT).show();
         }else if(booking_status_id == 4){//me klient
-
+            Toast.makeText(MenuHyreseActivity.this, "Ne taxi!!", Toast.LENGTH_SHORT).show();
         }else if(booking_status_id == 5){//kompletuar
             handler.removeCallbacks(checkRequestInterval);
         }else if(booking_status_id == 6){//Refuzuar Nga Shoferi Ne Pending
             requestedVehicleDialog.cancel();
+            removeRequestedPostionMarker();
+            removeRequestedVehicleMarker();
             if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
                 notifyUserForChangedRequestStatus(booking_status_id);
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(client_live_location.getLatitude(), client_live_location.getLongitude()),cameraDefaultZoom));
+                Toast.makeText(MenuHyreseActivity.this, "Porosia juaj u anullua nga shoferi", Toast.LENGTH_SHORT).show();
             }
             handler.removeCallbacks(checkRequestInterval);
-            Toast.makeText(MenuHyreseActivity.this, "Porosia juaj u anullua nga shoferi", Toast.LENGTH_SHORT).show();
         }else if(booking_status_id == 7){//Refuzuar Nga Klienti Ne Pending
             handler.removeCallbacks(checkRequestInterval);
         }else if(booking_status_id == 8){//Refuzuar Nga Shoferi Duke Marre Klientin
@@ -509,7 +531,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             return;
         }
 
-        map.moveCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), 50));
 
         userLoggedInPreferencesEditor.putInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, booking_status_id);
         userLoggedInPreferencesEditor.commit();
@@ -517,9 +538,28 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     public void cancelRequestAction(int error_code){
         requestedVehicleDialog.cancel();
+        removeRequestedPostionMarker();
+        removeRequestedVehicleMarker();
+        activeBookingDialog.setVisibility(View.GONE);
+        kerkoTaxiBTN.setVisibility(View.VISIBLE);
+        takeMeHereContainer.setVisibility(View.VISIBLE);
+
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(client_live_location.getLatitude(), client_live_location.getLongitude()),cameraDefaultZoom));
         Toast.makeText(MenuHyreseActivity.this, "Porosia u anullua me sukses.", Toast.LENGTH_SHORT).show();
     }
 
+    private void removeRequestedPostionMarker(){
+        if(requestedPositionMarker != null){
+            requestedPositionMarker.remove();
+            requestedPositionMarker = null;
+        }
+    }
+    private void removeRequestedVehicleMarker(){
+        if(requestedVehicleMarker != null){
+            requestedVehicleMarker.remove();
+            requestedVehicleMarker = null;
+        }
+    }
     public void notifyUserForChangedRequestStatus(final int booking_status_id){
 
         requestStatusDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
@@ -536,11 +576,16 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                 }
             }
         });
+        TextView statusTittle = (TextView) requestStatusDialog.findViewById(R.id.status_tittle);
+        TextView info = (TextView) requestStatusDialog.findViewById(R.id.requested_dialog_info);
         ImageView statusImage = (ImageView) requestStatusDialog.findViewById(R.id.status_image);
         if(booking_status_id == 2){
             statusImage.setImageResource(R.drawable.accepted);
+            statusTittle.setText(getResources().getString(R.string.requested_status_dialog_accepted_tittle));
         }else{
+            info.setVisibility(View.GONE);
             statusImage.setImageResource(R.drawable.declined);
+            statusTittle.setText(getResources().getString(R.string.requested_status_dialog_declined_tittle));
         }
         requestStatusDialog.show();
         requestStatusDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);

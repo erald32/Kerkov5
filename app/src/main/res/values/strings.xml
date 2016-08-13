@@ -4,4 +4,6 @@
     <string name="kerko_taxi">Kërko Taxi</string>
     <string name="searching_place_text">...</string>
     <string name="come_and_take_me">Eja më merr</string>
+    <string name="requested_status_dialog_accepted_tittle">KËRKESA JUAJ U PRANUA NGA SHOFERI</string>
+    <string name="requested_status_dialog_declined_tittle">KËRKESA JUAJ U REFUZUA NGA SHOFERI</string>
 </resources>

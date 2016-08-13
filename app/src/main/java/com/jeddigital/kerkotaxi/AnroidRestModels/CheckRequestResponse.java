@@ -75,7 +75,7 @@ public class CheckRequestResponse {
     Double client_refused_on_pending_vehicle_lng;
 
     @SerializedName("client_refused_on_pending_time")
-    Double client_refused_on_pending_time;
+    String client_refused_on_pending_time;
 
     @SerializedName("client_refused_on_pending_client_lat")
     Double client_refused_on_pending_client_lat;
@@ -301,7 +301,7 @@ public class CheckRequestResponse {
         return client_refused_on_pending_vehicle_lng;
     }
 
-    public Double getClient_refused_on_pending_time() {
+    public String getClient_refused_on_pending_time() {
         return client_refused_on_pending_time;
     }
 
@@ -569,7 +569,7 @@ public class CheckRequestResponse {
         this.client_refused_on_pending_vehicle_lng = client_refused_on_pending_vehicle_lng;
     }
 
-    public void setClient_refused_on_pending_time(Double client_refused_on_pending_time) {
+    public void setClient_refused_on_pending_time(String client_refused_on_pending_time) {
         this.client_refused_on_pending_time = client_refused_on_pending_time;
     }
 
