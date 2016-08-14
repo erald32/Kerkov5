@@ -2,6 +2,8 @@ package com.jeddigital.kerkotaxi.AnroidRestModels;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.List;
+
 
 /**
  * Created by Theodhori on 8/10/2016.
@@ -208,6 +210,9 @@ public class CheckRequestResponse {
 
     @SerializedName("distance_params")
     DistanceParam distance_params;
+
+    @SerializedName("booking_vehicle_route")
+    List<BookingLatLngPosition> booking_vehicle_route;
 
     public CheckRequestResponse(){
 
@@ -481,6 +486,10 @@ public class CheckRequestResponse {
         return distance_params;
     }
 
+    public List<BookingLatLngPosition> getBooking_vehicle_route() {
+        return booking_vehicle_route;
+    }
+
     public void setId(int id) {
         this.id = id;
     }
@@ -747,5 +756,9 @@ public class CheckRequestResponse {
 
     public void setDistance_params(DistanceParam distance_params) {
         this.distance_params = distance_params;
+    }
+
+    public void setBooking_vehicle_route(List<BookingLatLngPosition> booking_vehicle_route) {
+        this.booking_vehicle_route = booking_vehicle_route;
     }
 }

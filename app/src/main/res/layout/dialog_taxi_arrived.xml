@@ -19,12 +19,11 @@
         android:padding="10dp">
 
         <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
-            android:id="@+id/status_tittle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
             android:gravity="center"
-            android:text="@string/requested_status_dialog_accepted_tittle"
+            android:text="TAXI-ja ka mberitur dhe eshte duke ju pritur"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textColor="#c2c3c4" />
 
@@ -102,15 +101,6 @@
                     android:textColor="#ffffff" />
             </LinearLayout>
         </RelativeLayout>
-
-        <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
-            android:id="@+id/requested_dialog_info"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="JU DO TË NDIQNI NË KOHË REALE VENDODHJEN E TIJ"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textColor="#c2c3c4" />
     </LinearLayout>
 
 </RelativeLayout>

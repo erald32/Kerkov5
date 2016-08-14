@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dialog_taxi_arriving"
     android:layout_width="wrap_content"
     android:visibility="gone"
     android:layout_height="wrap_content"
-    android:id="@+id/dialog_taxi_arriving"
     android:orientation="vertical">
 
     <ImageView
@@ -19,17 +19,27 @@
         android:id="@+id/big_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
         android:paddingLeft="15dp"
         android:paddingRight="15dp"
-        android:paddingBottom="10dp">
+        android:paddingTop="10dp">
 
+        <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
+            android:id="@+id/dialog_taxi_arriving_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:layout_marginBottom="15dp"
+            android:text="JU PO NDIQNI NË KOHË REALE ARDHJEN E TAXI-SË TUAJ"
+            android:textColor="#ffffff" />
 
         <RelativeLayout
             android:id="@+id/car_details_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="40dp"
+            android:layout_below="@+id/dialog_taxi_arriving_title"
+            android:layout_marginBottom="20dp"
             android:background="@drawable/listview_item_dialog_nearby_vehicles"
             android:padding="10dp">
 
@@ -61,7 +71,7 @@
                 android:layout_weight="3"
                 android:orientation="vertical">
 
-                <TextView
+                <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
                     android:id="@+id/driver_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -71,7 +81,7 @@
                     android:text="emer mbiemer"
                     android:textColor="#ffffff" />
 
-                <TextView
+                <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
                     android:id="@+id/car_type"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -81,7 +91,7 @@
                     android:text="tip makine"
                     android:textColor="#ffffff" />
 
-                <TextView
+                <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
                     android:id="@+id/arrival_time"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
