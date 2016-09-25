@@ -1,5 +1,7 @@
 package com.jeddigital.kerkotaxi.AndroidRestClientApi;
 
+import android.app.Activity;
+import android.app.Service;
 import android.content.Context;
 import android.location.Location;
 import android.util.Log;
@@ -25,6 +27,7 @@ import com.jeddigital.kerkotaxi.AnroidRestModels.CheckRequestResponse;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
 import com.jeddigital.kerkotaxi.GSON.BooleanTypeAdapter;
 import com.jeddigital.kerkotaxi.MenuHyreseActivity;
+import com.jeddigital.kerkotaxi.Services.CheckRequestService;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -298,7 +301,15 @@ public class AndroidRestClientApiMethods {
 
                             CheckRequestResponse requestResponse = gson.fromJson(jsonResponse.getString("booking"), new TypeToken<CheckRequestResponse>(){}.getType());
 
-                            ((MenuHyreseActivity)context).handleCheckRequestAction(requestResponse);
+                            if(MenuHyreseActivity.activeActivity){
+                                if (context instanceof Activity) {
+                                    ((MenuHyreseActivity)context).handleCheckRequestAction(requestResponse);
+                                } else if (context instanceof Service){
+                                    //context i ardhur nga Service
+                                }
+                            }else{
+                                ((CheckRequestService)context).handleCheckRequestAction(requestResponse);
+                            }
 
                             if (error_code == 0) {
                                 Log.e("qqq", "requesti u mor me sukses");

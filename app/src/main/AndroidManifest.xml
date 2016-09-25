@@ -38,6 +38,33 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+
+        <receiver
+            android:name=".Receivers.OnStartUpBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Internet Changed Receiver -->
+        <receiver android:name=".Receivers.ConectivityChangedReceiver">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".Services.CheckRequestService"
+            android:enabled="true"></service>
+
+        <service
+            android:name=".Services.OnStartUpService"
+            android:enabled="true"></service>
     </application>
 
 </manifest>

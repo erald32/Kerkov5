@@ -2,6 +2,7 @@ package com.jeddigital.kerkotaxi;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -51,6 +52,7 @@ import com.jeddigital.kerkotaxi.AnroidRestModels.CheckRequestResponse;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
 import com.jeddigital.kerkotaxi.IOTools.InternalStorageTools;
 import com.jeddigital.kerkotaxi.IOTools.StorageConfigurations;
+import com.jeddigital.kerkotaxi.Services.CheckRequestService;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -70,6 +72,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     public static final String clientId = "1";
 
+    public static boolean activeActivity = false;
     Handler handler;
     private GoogleMap map;
     Location client_live_location;
@@ -113,7 +116,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu_hyrese);
 
-        restApiClientMethods = new AndroidRestClientApiMethods(MenuHyreseActivity.this);
         userLoggedInPreferences = getSharedPreferences(StorageConfigurations.USER_LOGGED_IN_SHARED_PREFS_KEY, MODE_PRIVATE);
         userLoggedInPreferencesEditor = userLoggedInPreferences.edit();
 
@@ -177,7 +179,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     //  showArrivingTaxiDialog();
     //  showRequestStatusDialog();
-    //  restApiClientMethods.updateClientLocation(client_live_location, clientId);
+    //   .updateClientLocation(client_live_location, clientId);
     //  get_name_for_location(new LatLng(41.325935, 19.818081));
     }
 
@@ -291,9 +293,10 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         markers.get(id).showInfoWindow();
     }
 
-    public void showNearByVehiclesAction(final List<NearbyVehicle> nearbyVehicles, final  LatLng requestedLocation){
+    public void showNearByVehiclesAction(final List<NearbyVehicle> nearbyVehiclesat, final  LatLng requestedLocation){
         LatLngBounds.Builder nearbyVehiclesBoundsBuilder = new LatLngBounds.Builder();
         nearbyVehiclesMarkers.clear();
+        final List<NearbyVehicle> nearbyVehicles = nearbyVehiclesat;
 
 
         if(nearbyVehicles.size() > 0){
@@ -343,12 +346,14 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                 highlightDotWithId(dots, nearbyVehicles.get(0).getId());
                 highlightMarkerWithId(nearbyVehiclesMarkers, nearbyVehicles.get(0).getId());
 
-            nearbyVehiclesViewpager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            nearbyVehiclesViewpager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
                 @Override
                 public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
                 @Override
                 public void onPageSelected(int position) {
-                    nearbyVehiclesMarkers.get(nearbyVehicles.get(position).getId()).showInfoWindow();
+                    NearbyVehicle positionvehicle = nearbyVehicles.get(position);
+                    int id = positionvehicle.getId();
+                    nearbyVehiclesMarkers.get(id).showInfoWindow();
                     highlightDotWithId(dots, nearbyVehicles.get(position).getId());
                     highlightMarkerWithId(nearbyVehiclesMarkers, nearbyVehicles.get(position).getId());
                 }
@@ -427,13 +432,14 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         Toast.makeText(this, "error code response: "+error_code, Toast.LENGTH_SHORT).show();
     }
 
-    private void drawClientInRoute(CheckRequestResponse requestResponse){
+    private void drawClientInRoute(CheckRequestResponse requestResponse, LatLngBounds.Builder routeBoundsBuilder){
 
         PolylineOptions clientInPolyLineOptions = new PolylineOptions().width(5).color(Color.GREEN);
         List<BookingLatLngPosition> bookingLatLngPositions = requestResponse.getBooking_vehicle_route();
         for(BookingLatLngPosition bookingLatLngPosition : bookingLatLngPositions){
             if(bookingLatLngPosition.getLat_lng_booking_status() == 4){
                 clientInPolyLineOptions.add(new LatLng(bookingLatLngPosition.getLat(), bookingLatLngPosition.getLng()));
+                routeBoundsBuilder.include(new LatLng(bookingLatLngPosition.getLat(), bookingLatLngPosition.getLng()));
             }
         }
 
@@ -542,6 +548,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         }else if(booking_status_id == 3){//duke pritur klientin
             kerkoTaxiBTN.setVisibility(View.INVISIBLE);
             takeMeHereContainer.setVisibility(View.INVISIBLE);
+            activeBookingDialog.setVisibility(View.GONE);
             positionRequestedVehicleMarker(requestResponse);
             setRequestedPositionMarker(requestResponse);
 
@@ -561,7 +568,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             removeRequestedPostionMarker();
             positionClientInMarker(requestResponse);
             positionStartMarker(requestResponse);
-            drawClientInRoute(requestResponse);
+            drawClientInRoute(requestResponse, routeBoundsBuilder);
 
             routeBoundsBuilder.include(startMarker.getPosition());
             routeBoundsBuilder.include(clientInMarker.getPosition());
@@ -572,7 +579,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                 removeRequestedVehicleMarker();
                 removeRequestedPostionMarker();
                 removeClientInMarker();
-                drawClientInRoute(requestResponse);
+                drawClientInRoute(requestResponse, routeBoundsBuilder);
 
                 positionStartMarker(requestResponse);
                 positionFinishMarker(requestResponse);
@@ -731,13 +738,27 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     @Override
     protected void onStart() {
         super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        activeActivity = true;
+        restApiClientMethods = new AndroidRestClientApiMethods(MenuHyreseActivity.this);
         handler.post(checkRequestInterval);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        activeActivity = false;
+        handler.removeCallbacks(checkRequestInterval);
+        Intent serviceIntent = new Intent(this, CheckRequestService.class);
+        startService(serviceIntent);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-
-        handler.removeCallbacks(checkRequestInterval);
     }
 }
