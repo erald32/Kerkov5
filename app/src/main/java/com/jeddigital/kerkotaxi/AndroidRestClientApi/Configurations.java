@@ -12,7 +12,8 @@ public class Configurations {
     public static final String CANCEL_REQUEST_URL = WEB_SERVICE_BASE_URL + "cancelRequest.php";
     public static final String CHECK_REQUEST_STATUS_URL = WEB_SERVICE_BASE_URL + "checkRequestStatus.php";
 
-
+    public static  final int CHECK_REQUEST_STATUS_HOMEPAGE_SERVICE_INTERVAL = 5000;
+    public static  final int CHECK_REQUEST_STATUS_BACKGROUND_SERVICE_INTERVAL = 5000;
 
 
 

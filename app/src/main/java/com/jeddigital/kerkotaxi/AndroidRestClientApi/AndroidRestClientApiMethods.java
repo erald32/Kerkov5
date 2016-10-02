@@ -306,9 +306,15 @@ public class AndroidRestClientApiMethods {
                                     ((MenuHyreseActivity)context).handleCheckRequestAction(requestResponse);
                                 } else if (context instanceof Service){
                                     //context i ardhur nga Service
+                                    Log.e("dev", "case 1");
                                 }
                             }else{
-                                ((CheckRequestService)context).handleCheckRequestAction(requestResponse);
+                                if(context instanceof Service){
+                                    ((CheckRequestService)context).handleCheckRequestAction(requestResponse);
+                                }else {//kontexti vjen nga aktvity
+                                    //context i ardhur nga Activity
+                                    Log.e("dev", "case 2");
+                                }
                             }
 
                             if (error_code == 0) {
@@ -318,6 +324,7 @@ public class AndroidRestClientApiMethods {
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
+                            Log.e("DevError","Error parsing checkrequestStatus response");
                         }
                     }
                 },
@@ -325,6 +332,8 @@ public class AndroidRestClientApiMethods {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         error.printStackTrace();
+
+                        Log.e("DevError","Error getting checkrequestStatus response :"+error);
                     }
                 }
         ) {

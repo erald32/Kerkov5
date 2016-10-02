@@ -47,6 +47,7 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.jeddigital.kerkotaxi.Adapters.NearbyVehiclesViewPagerAdapter;
 import com.jeddigital.kerkotaxi.AndroidRestClientApi.AndroidRestClientApiMethods;
+import com.jeddigital.kerkotaxi.AndroidRestClientApi.Configurations;
 import com.jeddigital.kerkotaxi.AnroidRestModels.BookingLatLngPosition;
 import com.jeddigital.kerkotaxi.AnroidRestModels.CheckRequestResponse;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
@@ -60,13 +61,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class MenuHyreseActivity extends FragmentActivity implements LocationListener {
+public class MenuHyreseActivity extends FragmentActivity implements LocationListener, TouchableWrapper.UpdateMapAfterUserInteraction {
 
     private Runnable checkRequestInterval = new Runnable(){
         public void run(){
             restApiClientMethods.checkRequestStatus(clientId);
 
-            handler.postDelayed(checkRequestInterval, 5000);
+            handler.postDelayed(checkRequestInterval, Configurations.CHECK_REQUEST_STATUS_HOMEPAGE_SERVICE_INTERVAL);
         }
     };
 
@@ -149,8 +150,8 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         }
 
 
-        SupportMapFragment supportMapFragment =
-                (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        MySupportMapFragment supportMapFragment =
+                (MySupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         map = supportMapFragment.getMap();
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -234,7 +235,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if(event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE){
-                    centerPosTV.setText(getResources().getString(R.string.searching_place_text));
+       //             centerPosTV.setText(getResources().getString(R.string.searching_place_text));
                 }
                 return false;
             }
@@ -508,6 +509,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     public void handleCheckRequestAction(CheckRequestResponse requestResponse){
         int booking_status_id = requestResponse.getStatus_id();
         LatLngBounds.Builder routeBoundsBuilder = new LatLngBounds.Builder();
+        Log.e("dev", "handleCheckRequestAction 'homeActivity' bookingStatusId = "+booking_status_id);
 
         if(booking_status_id == 1){//pending
             kerkoTaxiBTN.setVisibility(View.INVISIBLE);
@@ -619,6 +621,8 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             }
             handler.removeCallbacks(checkRequestInterval);
         }else if(booking_status_id == 12){//Refuzuar Nga Shoferi Me Klient
+            handler.removeCallbacks(checkRequestInterval);
+        }else if(booking_status_id == 13){//Anulluar nga sistemi per mospranim nga shoferi
             handler.removeCallbacks(checkRequestInterval);
         }else{//no booking status id -> there is no booking for this client
             handler.removeCallbacks(checkRequestInterval);
@@ -746,6 +750,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         activeActivity = true;
         restApiClientMethods = new AndroidRestClientApiMethods(MenuHyreseActivity.this);
         handler.post(checkRequestInterval);
+        Log.e("devLog", "onresume called");
     }
 
     @Override
@@ -760,5 +765,20 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     @Override
     protected void onStop() {
         super.onStop();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+    }
+
+    @Override
+    public void onUpdateMapAfterUserInteraction() {
+        centerPosTV.setText(get_name_for_location(map.getCameraPosition().target));
+    }
+
+    @Override
+    public void onUpdateMapOnUserInteraction() {
+        centerPosTV.setText(getResources().getString(R.string.searching_place_text));
     }
 }

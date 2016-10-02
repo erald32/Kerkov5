@@ -18,7 +18,7 @@
 
             <fragment
                 android:id="@+id/map"
-                android:name="com.google.android.gms.maps.SupportMapFragment"
+                class="com.jeddigital.kerkotaxi.MySupportMapFragment"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
@@ -39,90 +39,96 @@
             </RelativeLayout>
 
             <RelativeLayout
-                android:id="@+id/take_me_here_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_above="@+id/center_dot"
-                android:layout_centerHorizontal="true">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
                 <RelativeLayout
+                    android:id="@+id/take_me_here_container"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_above="@+id/triangle"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginBottom="-2dp">
-
-
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignBottom="@+id/center_position_tv_container"
-                        android:layout_alignLeft="@+id/center_position_tv_container"
-                        android:layout_alignRight="@+id/center_position_tv_container"
-                        android:layout_alignTop="@+id/center_position_tv_container"
-                        android:adjustViewBounds="true"
-                        android:scaleType="fitXY"
-                        android:src="@drawable/dialog_background" />
+                    android:layout_above="@+id/center_dot"
+                    android:layout_centerHorizontal="true">
 
                     <RelativeLayout
-                        android:id="@+id/center_position_tv_container"
+                        android:id="@+id/title_txt_container"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:padding="3dp">
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginBottom="-2dp">
+
 
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_alignBottom="@+id/center_position_tv"
-                            android:layout_alignLeft="@+id/center_position_tv"
-                            android:layout_alignRight="@+id/center_position_tv"
-                            android:layout_alignTop="@+id/center_position_tv"
+                            android:layout_alignBottom="@+id/center_position_tv_container"
+                            android:layout_alignLeft="@+id/center_position_tv_container"
+                            android:layout_alignRight="@+id/center_position_tv_container"
+                            android:layout_alignTop="@+id/center_position_tv_container"
                             android:adjustViewBounds="true"
                             android:scaleType="fitXY"
-                            android:src="@drawable/textview_background" />
+                            android:src="@drawable/dialog_background" />
 
-                        <TextView
-                            android:id="@+id/center_position_tv"
+                        <RelativeLayout
+                            android:id="@+id/center_position_tv_container"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_below="@+id/take_me_here_text"
-                            android:layout_centerHorizontal="true"
-                            android:gravity="center"
-                            android:maxLines="1"
-                            android:minWidth="200dp"
-                            android:paddingLeft="20dp"
-                            android:paddingRight="20dp"
-                            android:text="@string/searching_place_text"
-                            android:textColor="#fff" />
+                            android:padding="3dp">
 
-                        <TextView
-                            android:id="@+id/take_me_here_text"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentTop="true"
-                            android:layout_centerHorizontal="true"
-                            android:layout_marginBottom="2dp"
-                            android:text="MË MËRR KËTU"
-                            android:textColor="#fff" />
+                            <ImageView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignBottom="@+id/center_position_tv"
+                                android:layout_alignLeft="@+id/center_position_tv"
+                                android:layout_alignRight="@+id/center_position_tv"
+                                android:layout_alignTop="@+id/center_position_tv"
+                                android:adjustViewBounds="true"
+                                android:scaleType="fitXY"
+                                android:src="@drawable/textview_background" />
+
+                            <TextView
+                                android:id="@+id/center_position_tv"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_below="@+id/take_me_here_text"
+                                android:layout_centerHorizontal="true"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:minWidth="200dp"
+                                android:paddingLeft="20dp"
+                                android:paddingRight="20dp"
+                                android:text="@string/searching_place_text"
+                                android:textColor="#fff" />
+
+                            <TextView
+                                android:id="@+id/take_me_here_text"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentTop="true"
+                                android:layout_centerHorizontal="true"
+                                android:layout_marginBottom="2dp"
+                                android:text="MË MËRR KËTU"
+                                android:textColor="#fff" />
+
+                        </RelativeLayout>
 
                     </RelativeLayout>
 
+                    <ImageView
+                        android:id="@+id/triangle"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
+                        android:layout_below="@+id/title_txt_container"
+                        android:layout_centerHorizontal="true"
+                        android:src="@drawable/position_triangle" />
                 </RelativeLayout>
 
-                <ImageView
-                    android:id="@+id/triangle"
-                    android:layout_width="15dp"
-                    android:layout_height="15dp"
-                    android:layout_alignParentBottom="true"
-                    android:layout_centerHorizontal="true"
-                    android:src="@drawable/position_triangle" />
-            </RelativeLayout>
+                <RelativeLayout
+                    android:id="@+id/center_dot"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp"
+                    android:layout_centerInParent="true"></RelativeLayout>
 
-            <RelativeLayout
-                android:id="@+id/center_dot"
-                android:layout_width="1dp"
-                android:layout_height="1dp"
-                android:layout_centerInParent="true"></RelativeLayout>
+            </RelativeLayout>
 
         </RelativeLayout>
 

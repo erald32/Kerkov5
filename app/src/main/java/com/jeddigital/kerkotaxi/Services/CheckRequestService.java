@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.jeddigital.kerkotaxi.AndroidRestClientApi.AndroidRestClientApiMethods;
+import com.jeddigital.kerkotaxi.AndroidRestClientApi.Configurations;
 import com.jeddigital.kerkotaxi.AnroidRestModels.CheckRequestResponse;
 import com.jeddigital.kerkotaxi.CustomUI.UiUtilities;
 import com.jeddigital.kerkotaxi.IOTools.StorageConfigurations;
@@ -36,7 +37,7 @@ public class CheckRequestService extends Service{
             if(!MenuHyreseActivity.activeActivity){
                 restClientApiMethods.checkRequestStatus(clientId);
 
-                handler.postDelayed(checkRequestInterval, 5000);
+                handler.postDelayed(checkRequestInterval, Configurations.CHECK_REQUEST_STATUS_BACKGROUND_SERVICE_INTERVAL);
             }else{
                 handler.removeCallbacks(this);
             }
@@ -72,6 +73,7 @@ public class CheckRequestService extends Service{
     public void handleCheckRequestAction(CheckRequestResponse requestResponse){
         int booking_status_id = requestResponse.getStatus_id();
         LatLngBounds.Builder routeBoundsBuilder = new LatLngBounds.Builder();
+        Log.e("dev", "handleCheckRequestAction 'backgroundService' bookingStatusId = "+booking_status_id);
 
         Toast.makeText(CheckRequestService.this, "status "+booking_status_id, Toast.LENGTH_SHORT).show();
 
@@ -101,6 +103,8 @@ public class CheckRequestService extends Service{
         }else if(booking_status_id == 11){//Refuzuar Nga Klienti Duke Pritur Klientin
 
         }else if(booking_status_id == 12){//Refuzuar Nga Shoferi Me Klient
+
+        }else if(booking_status_id == 13){//Anulluar nga sistemi per mospranim nga shoferi
 
         }else{//no booking status id -> there is no booking for this client
 
