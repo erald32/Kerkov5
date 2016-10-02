@@ -1,6 +1,7 @@
 package com.jeddigital.kerkotaxi;
 
 import android.content.Context;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -32,9 +33,14 @@ public  class TouchableWrapper extends FrameLayout {
             case MotionEvent.ACTION_DOWN:
                 updateMapAfterUserInteraction.onUpdateMapOnUserInteraction();
                 Log.e("dev", "hyri");
+                break;
             case MotionEvent.ACTION_UP:
-
-                updateMapAfterUserInteraction.onUpdateMapAfterUserInteraction();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateMapAfterUserInteraction.onUpdateMapAfterUserInteraction();
+                    }
+                }, 600);
                 Log.e("dev", "doli");
                 break;
         }

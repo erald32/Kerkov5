@@ -51,6 +51,7 @@ import com.jeddigital.kerkotaxi.AndroidRestClientApi.Configurations;
 import com.jeddigital.kerkotaxi.AnroidRestModels.BookingLatLngPosition;
 import com.jeddigital.kerkotaxi.AnroidRestModels.CheckRequestResponse;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
+import com.jeddigital.kerkotaxi.CustomUI.UiUtilities;
 import com.jeddigital.kerkotaxi.IOTools.InternalStorageTools;
 import com.jeddigital.kerkotaxi.IOTools.StorageConfigurations;
 import com.jeddigital.kerkotaxi.Services.CheckRequestService;
@@ -79,7 +80,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     Location client_live_location;
     Geocoder geocoder;
     TextView centerPosTV;
-    RelativeLayout overMapLayer;
     RelativeLayout takeMeHereContainer;
 
     Float cameraDefaultZoom = 15.0F;
@@ -121,7 +121,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         userLoggedInPreferencesEditor = userLoggedInPreferences.edit();
 
         centerPosTV = (TextView) findViewById(R.id.center_position_tv);
-        overMapLayer = (RelativeLayout)findViewById(R.id.overMapLayer);
         kerkoTaxiBTN = (Button) findViewById(R.id.kerko_taxi_btn);
         takeMeHereContainer = (RelativeLayout) findViewById(R.id.take_me_here_container);
 
@@ -231,15 +230,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                 centerPosTV.setText(get_name_for_location(cameraPosition.target));
             }
         });*/
-        overMapLayer.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if(event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE){
-       //             centerPosTV.setText(getResources().getString(R.string.searching_place_text));
-                }
-                return false;
-            }
-        });
 
         kerkoTaxiBTN.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -301,10 +291,12 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
 
         if(nearbyVehicles.size() > 0){
+            map.setPadding(0,0,0, UiUtilities.dpToPx(getApplicationContext(), 400));
             nearbyVehiclesDialog.setVisibility(View.VISIBLE);
             nearbyVehiclesDialogXIcon.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    map.setPadding(0,0,0,0);
                     map.clear();
                     map.animateCamera(CameraUpdateFactory.newLatLng(requestedLocation));
                     kerkoTaxiBTN.setVisibility(View.VISIBLE);

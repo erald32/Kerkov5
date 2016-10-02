@@ -13,8 +13,7 @@
         <RelativeLayout
             android:id="@+id/primary_scene_container"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/bottom_dialog_containers">
+            android:layout_height="wrap_content">
 
             <fragment
                 android:id="@+id/map"
@@ -31,12 +30,6 @@
                 android:layout_gravity="center_horizontal|bottom"
                 android:text="Kerko Taxi" />
 
-            <RelativeLayout
-                android:id="@+id/overMapLayer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-            </RelativeLayout>
 
             <RelativeLayout
                 android:layout_width="match_parent"

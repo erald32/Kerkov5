@@ -15,7 +15,7 @@
             android:layout_width="110dp"
             android:layout_height="110dp"
             android:layout_alignBottom="@+id/vehicle_data_container"
-            android:layout_alignParentTop="true"
+            android:layout_alignTop="@+id/vehicle_data_container"
             android:layout_weight="1">
 
             <ImageView
