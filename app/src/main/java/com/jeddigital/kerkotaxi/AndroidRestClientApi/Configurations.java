@@ -5,7 +5,7 @@ package com.jeddigital.kerkotaxi.AndroidRestClientApi;
  */
 public class Configurations {
 
-    public static final String WEB_SERVICE_BASE_URL = "http://jeddigital.com/kerko_taxi/services/clients/";
+    public static final String WEB_SERVICE_BASE_URL = "http://1upinteractive.com/vodafonetour/taxi/services/clients/";
     public static final String UPDATE_KLIENT_LOCATION_URL = WEB_SERVICE_BASE_URL + "updateClientLocation.php";
     public static final String GET_NEARBY_TAXIS_URL = WEB_SERVICE_BASE_URL + "getNearbyTaxis.php";
     public static final String REQUEST_TAXI_URL = WEB_SERVICE_BASE_URL + "requestTaxi.php";

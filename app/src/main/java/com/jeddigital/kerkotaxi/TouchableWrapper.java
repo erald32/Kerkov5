@@ -32,7 +32,7 @@ public  class TouchableWrapper extends FrameLayout {
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 updateMapAfterUserInteraction.onUpdateMapOnUserInteraction();
-                Log.e("dev", "hyri");
+                Log.e("dev", "Action Down");
                 break;
             case MotionEvent.ACTION_UP:
                 new Handler().postDelayed(new Runnable() {
@@ -41,7 +41,7 @@ public  class TouchableWrapper extends FrameLayout {
                         updateMapAfterUserInteraction.onUpdateMapAfterUserInteraction();
                     }
                 }, 600);
-                Log.e("dev", "doli");
+                Log.e("dev", "Action Up");
                 break;
         }
         return super.dispatchTouchEvent(ev);

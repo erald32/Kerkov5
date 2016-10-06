@@ -3,6 +3,7 @@ package com.jeddigital.kerkotaxi.AndroidRestClientApi;
 import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
 import android.location.Location;
 import android.util.Log;
 import android.widget.Toast;
@@ -68,7 +69,13 @@ public class AndroidRestClientApiMethods {
                                 JSONArray nearbyVehiclesJSONArray = responseJSONObject.getJSONArray("nearby_vehicles");
                                 List<NearbyVehicle> nearbyVehicles = gson.fromJson(responseJSONObject.getString("nearby_vehicles"), new TypeToken<List<NearbyVehicle>>(){}.getType());
 
-                                ((MenuHyreseActivity)context).showNearByVehiclesAction(nearbyVehicles, requestedLocation);
+                                if (context instanceof Activity) {
+                                    ((MenuHyreseActivity) context).showNearByVehiclesAction(nearbyVehicles, requestedLocation);
+                                    Log.e("dev", "getNearbyVehicles data arrived menuhyrese cntext");
+                                }else if(context instanceof Service){
+                                    Log.e("dev", "getNearbyVehicles data arrived service cntext");
+
+                                }
                             }else{
                                 Toast.makeText(context, "error", Toast.LENGTH_SHORT).show();
                             }
@@ -80,19 +87,19 @@ public class AndroidRestClientApiMethods {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.e("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
+                Log.e("dev", "ErrorResponseOnLocationChanged: " + error.getMessage());
                 if (error instanceof NoConnectionError) {
-                    Log.e("qqq", "NoConnectionError: " + error.getMessage());
+                    Log.e("dev", "NoConnectionError: " + error.getMessage());
                 } else if (error instanceof TimeoutError) {
-                    Log.e("qqq", "TimeoutError: " + error.getMessage());
+                    Log.e("dev", "TimeoutError: " + error.getMessage());
                 } else if (error instanceof AuthFailureError) {
-                    Log.e("qqq", "AuthFailureError: " + error.getMessage());
+                    Log.e("dev", "AuthFailureError: " + error.getMessage());
                 } else if (error instanceof ServerError) {
-                    Log.e("qqq", "ServerError: " + error.getMessage());
+                    Log.e("dev", "ServerError: " + error.getMessage());
                 } else if (error instanceof NetworkError) {
-                    Log.e("qqq", "NetworkError: " + error.getMessage());
+                    Log.e("dev", "NetworkError: " + error.getMessage());
                 } else if (error instanceof ParseError) {
-                    Log.e("qqq", "ParseError: " + error.getMessage());
+                    Log.e("dev", "ParseError: " + error.getMessage());
                 }
             }
         }) {
@@ -105,8 +112,8 @@ public class AndroidRestClientApiMethods {
                 params.put("client_lat", String.valueOf(requestedLocation.latitude));
                 params.put("client_lng", String.valueOf(requestedLocation.longitude));
 
-                Log.e("qqq send", String.valueOf(requestedLocation.latitude));
-                Log.e("qqq send ", String.valueOf(requestedLocation.longitude));
+                Log.e("dev send", String.valueOf(requestedLocation.latitude));
+                Log.e("dev send ", String.valueOf(requestedLocation.longitude));
        /*       SharedPreferences Preferencat_Klient = getSharedPreferences(Configurations.SHARED_PREF_CLIENT, Context.MODE_PRIVATE);
                 SharedPreferences.Editor set_Prefs = Preferencat_Klient.edit();
                 set_Prefs.putString(Configurations.CLIENT_LATITUDE_PREF, client_live_latitude);
@@ -138,7 +145,9 @@ public class AndroidRestClientApiMethods {
                             int error_code = responseJSONObject.getInt("error_code");
                             String error_code_desc = responseJSONObject.getString("error_code_desc");
 
-                            ((MenuHyreseActivity)context).cancelRequestAction(error_code);
+                            if (context instanceof Activity) {
+                                ((MenuHyreseActivity) context).cancelRequestAction(error_code);
+                            }
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -146,18 +155,18 @@ public class AndroidRestClientApiMethods {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.e("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
+                Log.e("dev", "ErrorResponseOnLocationChanged: " + error.getMessage());
                 if (error instanceof NoConnectionError) {
-                    Log.e("qqq", "NoConnectionError: " + error.getMessage());
+                    Log.e("dev", "NoConnectionError: " + error.getMessage());
                 } else if (error instanceof TimeoutError) {
                 } else if (error instanceof AuthFailureError) {
-                    Log.e("qqq", "AuthFailureError: " + error.getMessage());
+                    Log.e("dev", "AuthFailureError: " + error.getMessage());
                 } else if (error instanceof ServerError) {
-                    Log.e("qqq", "ServerError: " + error.getMessage());
+                    Log.e("dev", "ServerError: " + error.getMessage());
                 } else if (error instanceof NetworkError) {
-                    Log.e("qqq", "NetworkError: " + error.getMessage());
+                    Log.e("dev", "NetworkError: " + error.getMessage());
                 } else if (error instanceof ParseError) {
-                    Log.e("qqq", "ParseError: " + error.getMessage());
+                    Log.e("dev", "ParseError: " + error.getMessage());
                 }
             }
         }) {
@@ -194,7 +203,9 @@ public class AndroidRestClientApiMethods {
                             int error_code = responseJSONObject.getInt("error_code");
                             String error_code_desc = responseJSONObject.getString("error_code_desc");
 
-                            ((MenuHyreseActivity)context).requestTaxiActionResponse(vehicle_id, error_code);
+                            if (context instanceof Activity) {
+                                ((MenuHyreseActivity)context).requestTaxiActionResponse(vehicle_id, error_code);
+                            }
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -202,18 +213,18 @@ public class AndroidRestClientApiMethods {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.e("qqq", "ErrorResponseOnLocationChanged: " + error.getMessage());
+                Log.e("dev", "ErrorResponseOnLocationChanged: " + error.getMessage());
                 if (error instanceof NoConnectionError) {
-                    Log.e("qqq", "NoConnectionError: " + error.getMessage());
+                    Log.e("dev", "NoConnectionError: " + error.getMessage());
                 } else if (error instanceof TimeoutError) {
                 } else if (error instanceof AuthFailureError) {
-                    Log.e("qqq", "AuthFailureError: " + error.getMessage());
+                    Log.e("dev", "AuthFailureError: " + error.getMessage());
                 } else if (error instanceof ServerError) {
-                    Log.e("qqq", "ServerError: " + error.getMessage());
+                    Log.e("dev", "ServerError: " + error.getMessage());
                 } else if (error instanceof NetworkError) {
-                    Log.e("qqq", "NetworkError: " + error.getMessage());
+                    Log.e("dev", "NetworkError: " + error.getMessage());
                 } else if (error instanceof ParseError) {
-                    Log.e("qqq", "ParseError: " + error.getMessage());
+                    Log.e("dev", "ParseError: " + error.getMessage());
                 }
             }
         }) {
@@ -253,9 +264,9 @@ public class AndroidRestClientApiMethods {
                             int error_code = jsonResponse.getInt("error_code");
                             String error_code_desc = jsonResponse.getString("error_code_desc");
                             if (error_code == 0) {
-                                Log.e("qqq", "koordinatat u derguan me sukses");
+                                Log.e("dev", "koordinatat u derguan me sukses");
                             } else {
-                                Log.e("qqq", error_code_desc);
+                                Log.e("dev", error_code_desc);
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -277,8 +288,8 @@ public class AndroidRestClientApiMethods {
                 params.put("client_lat", latitude);
                 params.put("client_lng", longitude);
 
-                Log.e("qqq_liveLocation_params", latitude);
-                Log.e("qqq_liveLocation_params", longitude);
+                Log.e("dev_liveLocation_params", latitude);
+                Log.e("dev_liveLocation_params", longitude);
 
                 return params;
             }
@@ -307,6 +318,10 @@ public class AndroidRestClientApiMethods {
                                 } else if (context instanceof Service){
                                     //context i ardhur nga Service
                                     Log.e("dev", "case 1");
+
+                                    Intent intent = new Intent(context, MenuHyreseActivity.class);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                    context.startActivity(intent);
                                 }
                             }else{
                                 if(context instanceof Service){
@@ -314,17 +329,20 @@ public class AndroidRestClientApiMethods {
                                 }else {//kontexti vjen nga aktvity
                                     //context i ardhur nga Activity
                                     Log.e("dev", "case 2");
+
+                                    Intent intent = new Intent(context, CheckRequestService.class);
+                                    context.startService(intent);
                                 }
                             }
 
                             if (error_code == 0) {
-                                Log.e("qqq", "requesti u mor me sukses");
+                                Log.e("dev", "requesti u mor me sukses");
                             } else {
-                                Log.e("qqq", error_code_desc);
+                                Log.e("dev", error_code_desc);
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
-                            Log.e("DevError","Error parsing checkrequestStatus response");
+                            Log.e("dev","Error parsing checkrequestStatus response");
                         }
                     }
                 },

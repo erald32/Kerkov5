@@ -83,10 +83,5 @@ public class NearbyVehiclesViewPagerAdapter extends PagerAdapter {
             container.removeView(view);
         }
 
-        @Override
-        public float getPageWidth(int position) {
-        return super.getPageWidth(position) * 0.85f;
-    }
-
 
 }

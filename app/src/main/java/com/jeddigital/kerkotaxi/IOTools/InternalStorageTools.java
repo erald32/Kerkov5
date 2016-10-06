@@ -36,17 +36,17 @@ public class InternalStorageTools {
             @Override
             public void onErrorResponse(VolleyError error) {
                 if (error instanceof NoConnectionError) {
-                    Log.d("qqq", "NoConnectionError: " + error.getMessage());
+                    Log.d("dev", "NoConnectionError: " + error.getMessage());
                 } else if (error instanceof TimeoutError) {
-                    Log.d("qqq", "AuthFailureError: " + error.getMessage());
+                    Log.d("dev", "AuthFailureError: " + error.getMessage());
                 } else if (error instanceof AuthFailureError) {
-                    Log.d("qqq", "AuthFailureError: " + error.getMessage());
+                    Log.d("dev", "AuthFailureError: " + error.getMessage());
                 } else if (error instanceof ServerError) {
-                    Log.d("qqq", "ServerError: " + error.getMessage());
+                    Log.d("dev", "ServerError: " + error.getMessage());
                 } else if (error instanceof NetworkError) {
-                    Log.d("qqq", "NetworkError: " + error.getMessage());
+                    Log.d("dev", "NetworkError: " + error.getMessage());
                 } else if (error instanceof ParseError) {
-                    Log.d("qqq", "ParseError: " + error.getMessage());
+                    Log.d("dev", "ParseError: " + error.getMessage());
                 }
             }
         });
