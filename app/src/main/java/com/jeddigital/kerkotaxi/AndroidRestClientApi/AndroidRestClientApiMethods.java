@@ -128,7 +128,6 @@ public class AndroidRestClientApiMethods {
         requestQueue.add(stringRequest);
     }
 
-
     public static void cancelRequest(final String client_id, final Location client_location) {
         final Double client_lat = client_location.getLatitude();
         final Double client_lng = client_location.getLongitude();
@@ -249,7 +248,6 @@ public class AndroidRestClientApiMethods {
 
 
     }
-
 
     public static void updateClientLocation(final Location location, final String client_id) {
         final String latitude = String.valueOf(location.getLatitude()).toString().trim();

@@ -12,6 +12,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
@@ -130,7 +131,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         nearbyVehiclesDialogXIcon = (ImageView) findViewById(R.id.dialog_nearby_vehicles_x_icon);
 
         taxiArrivingDialog = (RelativeLayout) findViewById(R.id.dialog_taxi_arriving);
-        taxiArrivingDialog_DriverFotoIV = (ImageView) taxiArrivingDialog.findViewById(R.id.driver_foto);
+        taxiArrivingDialog_DriverFotoIV = (ImageView) taxiArrivingDialog.findViewById(R.id.driver_photo);
         taxiArrivingDialog_DriverNameTV = (TextView) taxiArrivingDialog.findViewById(R.id.driver_name);
         taxiArrivingDialog_CarTypeTV = (TextView) taxiArrivingDialog.findViewById(R.id.car_type);
         taxiArrivingDialog_ArivalTimeTV = (TextView) taxiArrivingDialog.findViewById(R.id.arrival_time);
@@ -575,7 +576,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             routeBoundsBuilder.include(requestedVehicleMarker.getPosition());
             map.animateCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), mapPadding));
 
-            notifyUserForTaxiArrival();
+            notifyUserForTaxiArrival(requestResponse);
 
             Toast.makeText(MenuHyreseActivity.this, "Taksija ka mberitur!!", Toast.LENGTH_SHORT).show();
         }else if(booking_status_id == 4){//me klient
@@ -654,6 +655,9 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     public void cancelRequestAction(int error_code){
         if(error_code == 0){
+            if(taxiArrivedDialog != null){
+                taxiArrivedDialog.cancel();
+            }
             requestedVehicleDialog.cancel();
             removeRequestedPostionMarker();
             removeRequestedVehicleMarker();
@@ -734,11 +738,14 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         if(booking_status_id == 2){
             statusImage.setImageResource(R.drawable.accepted);
             statusTittle.setText(getResources().getString(R.string.requested_status_dialog_accepted_tittle));
-        }else{
+        }else if (booking_status_id == 6 || booking_status_id == 10 ){
             info.setVisibility(View.GONE);
             statusImage.setImageResource(R.drawable.declined);
             statusTittle.setText(getResources().getString(R.string.requested_status_dialog_declined_tittle));
+        }else{
+            return;
         }
+
         requestStatusDialog.show();
         requestStatusDialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
@@ -750,10 +757,28 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         },5000);
     }
 
-    public void notifyUserForTaxiArrival(){
+    public void notifyUserForTaxiArrival(CheckRequestResponse requestResponse){
         if(!taxiArrivedDialog.isShowing()){
             taxiArrivedDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
             taxiArrivedDialog.setContentView(R.layout.dialog_taxi_arrived);
+
+            ImageView driverPhoto = (ImageView) taxiArrivedDialog.findViewById(R.id.driver_photo);
+            TextView driverName = (TextView) taxiArrivedDialog.findViewById(R.id.driver_name);
+            TextView carModel = (TextView) taxiArrivedDialog.findViewById(R.id.car_model);
+            TextView arrivalTime = (TextView) taxiArrivedDialog.findViewById(R.id.arrival_time);
+            Button cancelRequest = (Button) taxiArrivedDialog.findViewById(R.id.cancel_request);
+
+            InternalStorageTools.getAndShowPhoto(getApplicationContext(), driverPhoto, requestResponse.getNearbyVehicle().getDriver().getPhoto_url());
+            driverName.setText(requestResponse.getNearbyVehicle().getDriver().getFirst_name() + " " + requestResponse.getNearbyVehicle().getDriver().getLast_name());
+            carModel.setText(requestResponse.getNearbyVehicle().getCar_model());
+            arrivalTime.setText(requestResponse.getNearbyVehicle().getDistance_params().getTime_readable());
+            cancelRequest.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    restApiClientMethods.cancelRequest(clientId, client_live_location);
+                }
+            });
+
             taxiArrivedDialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
             taxiArrivedDialog.setOnDismissListener(new DialogInterface.OnDismissListener(){
                 @Override
