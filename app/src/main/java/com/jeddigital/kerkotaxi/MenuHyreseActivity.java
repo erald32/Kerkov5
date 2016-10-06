@@ -149,7 +149,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         scrWidthInPX = metrics.widthPixels;
         scrHeightInPX = metrics.heightPixels;
 
-        mapPadding = scrWidthInPX/10;
+        mapPadding = scrWidthInPX/8;
 
         geocoder = new Geocoder(this, Locale.getDefault());
 
@@ -552,7 +552,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             map.animateCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), mapPadding));
 
             if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
-                notifyUserForChangedRequestStatus(booking_status_id);
+                notifyUserForChangedRequestStatus(requestResponse);
             }else{
                 requestStatusDialog.cancel();
                 if(taxiArrivingDialog.getVisibility() != View.VISIBLE){//bookings dialogTable hasn't been shown, so we make first initialisations
@@ -620,7 +620,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             removeRequestedPostionMarker();
             removeRequestedVehicleMarker();
             if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
-                notifyUserForChangedRequestStatus(booking_status_id);
+                notifyUserForChangedRequestStatus(requestResponse);
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(client_live_location.getLatitude(), client_live_location.getLongitude()),cameraDefaultZoom));
                 Toast.makeText(MenuHyreseActivity.this, "Porosia juaj u anullua nga shoferi", Toast.LENGTH_SHORT).show();
             }
@@ -629,19 +629,19 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             handler.removeCallbacks(checkRequestInterval);
         }else if(booking_status_id == 8){//Refuzuar Nga Shoferi Duke Marre Klientin
             if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
-                notifyUserForChangedRequestStatus(booking_status_id);
+                notifyUserForChangedRequestStatus(requestResponse);
             }
             handler.removeCallbacks(checkRequestInterval);
         }else if(booking_status_id == 9){//Refuzuar Nga Klienti Duke Marre Klientin
             handler.removeCallbacks(checkRequestInterval);
         }else if(booking_status_id == 10){//Refuzuar Nga Shoferi Duke Pritur Klientin
             if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
-                notifyUserForChangedRequestStatus(booking_status_id);
+                notifyUserForChangedRequestStatus(requestResponse);
             }
             handler.removeCallbacks(checkRequestInterval);
         }else if(booking_status_id == 11){//Refuzuar Nga Klienti Duke Pritur Klientin
             if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
-                notifyUserForChangedRequestStatus(booking_status_id);
+                notifyUserForChangedRequestStatus(requestResponse);
             }
             handler.removeCallbacks(checkRequestInterval);
         }else if(booking_status_id == 12){//Refuzuar Nga Shoferi Me Klient
@@ -721,7 +721,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             clientInPolyline = null;
         }
     }
-    public void notifyUserForChangedRequestStatus(final int booking_status_id){
+    public void notifyUserForChangedRequestStatus(final CheckRequestResponse requestResponse){
 
         requestStatusDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
         requestStatusDialog.setContentView(R.layout.dialog_request_status);
@@ -729,7 +729,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         requestStatusDialog.setOnDismissListener(new DialogInterface.OnDismissListener(){
             @Override
             public void onDismiss(DialogInterface dialog) {
-                if(booking_status_id == 2){
+                if(requestResponse.getStatus_id() == 2){
 
                 }else{
                     kerkoTaxiBTN.setVisibility(View.VISIBLE);
@@ -740,10 +740,10 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         TextView statusTittle = (TextView) requestStatusDialog.findViewById(R.id.status_tittle);
         TextView info = (TextView) requestStatusDialog.findViewById(R.id.requested_dialog_info);
         ImageView statusImage = (ImageView) requestStatusDialog.findViewById(R.id.status_image);
-        if(booking_status_id == 2){
+        if(requestResponse.getStatus_id() == 2){
             statusImage.setImageResource(R.drawable.accepted);
             statusTittle.setText(getResources().getString(R.string.requested_status_dialog_accepted_tittle));
-        }else if (booking_status_id == 6 || booking_status_id == 10 ){
+        }else if (requestResponse.getStatus_id() == 6 || requestResponse.getStatus_id() == 10 ){
             info.setVisibility(View.GONE);
             statusImage.setImageResource(R.drawable.declined);
             statusTittle.setText(getResources().getString(R.string.requested_status_dialog_declined_tittle));
