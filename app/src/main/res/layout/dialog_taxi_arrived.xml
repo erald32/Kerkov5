@@ -44,7 +44,7 @@
             <RelativeLayout
                 android:id="@+id/driver_foto_container"
                 android:layout_width="110dp"
-                android:layout_height="110dp"
+                android:layout_height="70dp"
                 android:layout_alignBottom="@+id/vehicle_data_container"
                 android:layout_alignParentTop="true"
                 android:layout_weight="1">
@@ -87,17 +87,6 @@
                     android:background="@drawable/textview_background"
                     android:gravity="center"
                     android:text="tip makine"
-                    android:textColor="#ffffff" />
-
-                <TextView
-                    android:id="@+id/arrival_time"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="3dp"
-                    android:layout_marginTop="4dp"
-                    android:background="@drawable/textview_background"
-                    android:gravity="center"
-                    android:text="arival time"
                     android:textColor="#ffffff" />
             </LinearLayout>
         </RelativeLayout>

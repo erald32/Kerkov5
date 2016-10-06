@@ -53,6 +53,7 @@ import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
 import com.jeddigital.kerkotaxi.CustomUI.UiUtilities;
 import com.jeddigital.kerkotaxi.IOTools.InternalStorageTools;
 import com.jeddigital.kerkotaxi.IOTools.StorageConfigurations;
+import com.jeddigital.kerkotaxi.Interfaces.AsyncGeocoderResponse;
 import com.jeddigital.kerkotaxi.Services.CheckRequestService;
 
 import java.io.IOException;
@@ -61,7 +62,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class MenuHyreseActivity extends FragmentActivity implements LocationListener, TouchableWrapper.UpdateMapAfterUserInteraction {
+public class MenuHyreseActivity extends FragmentActivity implements LocationListener, TouchableWrapper.UpdateMapAfterUserInteraction, AsyncGeocoderResponse {
 
     private Runnable checkRequestInterval = new Runnable(){
         public void run(){
@@ -565,6 +566,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                 taxiArrivingDialog_ArivalTimeTV.setText(requestResponse.getNearbyVehicle().getDistance_params().getTime_readable());
             }
         }else if(booking_status_id == 3){//duke pritur klientin
+            map.setPadding(0,0,0,0);//TODO vendos padding per layoutin ne bottom kur eshte taxija duke ardhur ne menyre te sakte dinamike spas lartesise se dialogut
             kerkoTaxiBTN.setVisibility(View.INVISIBLE);
             takeMeHereContainer.setVisibility(View.INVISIBLE);
             requestedVehicleDialog.cancel();
@@ -580,6 +582,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
             Toast.makeText(MenuHyreseActivity.this, "Taksija ka mberitur!!", Toast.LENGTH_SHORT).show();
         }else if(booking_status_id == 4){//me klient
+            map.setPadding(0,0,0,0);//TODO vendos padding per layoutin ne bottom kur eshte taxija duke ardhur ne menyre te sakte dinamike spas lartesise se dialogut
             kerkoTaxiBTN.setVisibility(View.INVISIBLE);
             takeMeHereContainer.setVisibility(View.INVISIBLE);
             requestedVehicleDialog.cancel();
@@ -596,7 +599,9 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             map.animateCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), mapPadding));
             Toast.makeText(MenuHyreseActivity.this, "Ne taxi!!", Toast.LENGTH_SHORT).show();
         }else if(booking_status_id == 5){//kompletuar
+
             if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
+                map.setPadding(0,0,0,0);//TODO vendos padding per layoutin ne bottom kur eshte taxija duke ardhur ne menyre te sakte dinamike spas lartesise se dialogut
                 removeRequestedVehicleMarker();
                 removeRequestedPostionMarker();
                 removeClientInMarker();
@@ -765,13 +770,11 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             ImageView driverPhoto = (ImageView) taxiArrivedDialog.findViewById(R.id.driver_photo);
             TextView driverName = (TextView) taxiArrivedDialog.findViewById(R.id.driver_name);
             TextView carModel = (TextView) taxiArrivedDialog.findViewById(R.id.car_model);
-            TextView arrivalTime = (TextView) taxiArrivedDialog.findViewById(R.id.arrival_time);
             Button cancelRequest = (Button) taxiArrivedDialog.findViewById(R.id.cancel_request);
 
             InternalStorageTools.getAndShowPhoto(getApplicationContext(), driverPhoto, requestResponse.getNearbyVehicle().getDriver().getPhoto_url());
             driverName.setText(requestResponse.getNearbyVehicle().getDriver().getFirst_name() + " " + requestResponse.getNearbyVehicle().getDriver().getLast_name());
             carModel.setText(requestResponse.getNearbyVehicle().getCar_model());
-            arrivalTime.setText(requestResponse.getNearbyVehicle().getDistance_params().getTime_readable());
             cancelRequest.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -832,7 +835,9 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     @Override
     public void onUpdateMapAfterUserInteraction() {
-        centerPosTV.setText(get_name_for_location(map.getCameraPosition().target));
+        TakeMeHerePositionSetterAsync takeMeHerePositionSetterAsync = new TakeMeHerePositionSetterAsync(map.getCameraPosition().target);
+        takeMeHerePositionSetterAsync.delegate = this;
+        takeMeHerePositionSetterAsync.execute();
     }
 
     @Override
@@ -840,4 +845,47 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         centerPosTV.setText(getResources().getString(R.string.searching_place_text));
     }
 
+    @Override
+    public void processShowingAdress(String adress) {
+        centerPosTV.setText(adress);
+    }
+
+    public class TakeMeHerePositionSetterAsync extends AsyncTask<Void,Void,String>{
+        double lat;
+        double lng;
+        public AsyncGeocoderResponse delegate = null;
+
+        public TakeMeHerePositionSetterAsync(LatLng location){
+            this.lat = location.latitude;
+            this.lng = location.longitude;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            String addressName = "";
+            try {
+                List<android.location.Address> addresses = geocoder.getFromLocation(lat, lng, 1);
+
+                if(addresses.size() > 0){
+                    for(int i = 0; i<=addresses.get(0).getMaxAddressLineIndex();i++){
+                        addressName += addresses.get(0).getAddressLine(i)+", ";
+                    }
+                    addressName = addressName.substring(0,addressName.length()-2);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return addressName;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            delegate.processShowingAdress(result);
+        }
+    }
 }
