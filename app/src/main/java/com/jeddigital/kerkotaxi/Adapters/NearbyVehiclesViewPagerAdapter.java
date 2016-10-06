@@ -44,7 +44,7 @@ public class NearbyVehiclesViewPagerAdapter extends PagerAdapter {
             View view = layoutInflater.inflate(R.layout.dialog_listview_item_nearby_vehicle, container, false);
             ImageView driverFoto = (ImageView)view.findViewById(R.id.driver_photo);
             TextView emerMbiemer = (TextView) view.findViewById(R.id.name);
-            TextView tipiMakines = (TextView) view.findViewById(R.id.car_type);
+            TextView tipiMakines = (TextView) view.findViewById(R.id.car_model);
             TextView arrivalTime = (TextView) view.findViewById(R.id.arrival);
             Button takeMeBTN = (Button) view.findViewById(R.id.take_me_btn);
 

@@ -134,7 +134,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         taxiArrivingDialog = (RelativeLayout) findViewById(R.id.dialog_taxi_arriving);
         taxiArrivingDialog_DriverFotoIV = (ImageView) taxiArrivingDialog.findViewById(R.id.driver_photo);
         taxiArrivingDialog_DriverNameTV = (TextView) taxiArrivingDialog.findViewById(R.id.driver_name);
-        taxiArrivingDialog_CarTypeTV = (TextView) taxiArrivingDialog.findViewById(R.id.car_type);
+        taxiArrivingDialog_CarTypeTV = (TextView) taxiArrivingDialog.findViewById(R.id.car_model);
         taxiArrivingDialog_ArivalTimeTV = (TextView) taxiArrivingDialog.findViewById(R.id.arrival_time);
         taxiArrivingDialog_CancelBooking = (RelativeLayout) taxiArrivingDialog.findViewById(R.id.cancel_booking_RL);
 
@@ -724,7 +724,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     public void notifyUserForChangedRequestStatus(final CheckRequestResponse requestResponse){
 
         requestStatusDialog = new Dialog(MenuHyreseActivity.this, R.style.UpAndDownDialogSlideAnim);
-        requestStatusDialog.setContentView(R.layout.dialog_request_status);
+        requestStatusDialog.setContentView(R.layout.dialog_request_accepted_or_declined);
         requestStatusDialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
         requestStatusDialog.setOnDismissListener(new DialogInterface.OnDismissListener(){
             @Override
@@ -740,10 +740,23 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         TextView statusTittle = (TextView) requestStatusDialog.findViewById(R.id.status_tittle);
         TextView info = (TextView) requestStatusDialog.findViewById(R.id.requested_dialog_info);
         ImageView statusImage = (ImageView) requestStatusDialog.findViewById(R.id.status_image);
+
+        ImageView driverPhotoIV = (ImageView) requestStatusDialog.findViewById(R.id.driver_photo);
+        TextView driverNameTV = (TextView) requestStatusDialog.findViewById(R.id.driver_name);
+        TextView carModelTV = (TextView) requestStatusDialog.findViewById(R.id.car_model);
+        TextView arrivalTimeTV = (TextView) requestStatusDialog.findViewById(R.id.arrival_time);
+
+
         if(requestResponse.getStatus_id() == 2){
             statusImage.setImageResource(R.drawable.accepted);
             statusTittle.setText(getResources().getString(R.string.requested_status_dialog_accepted_tittle));
-        }else if (requestResponse.getStatus_id() == 6 || requestResponse.getStatus_id() == 10 ){
+
+            InternalStorageTools.getAndShowPhoto(getApplicationContext(), driverPhotoIV, requestResponse.getNearbyVehicle().getDriver().getPhoto_url());
+            driverNameTV.setText(requestResponse.getNearbyVehicle().getDriver().getFirst_name() + " " +requestResponse.getNearbyVehicle().getDriver().getLast_name() );
+            carModelTV.setText(requestResponse.getNearbyVehicle().getCar_model());
+            arrivalTimeTV.setText(requestResponse.getNearbyVehicle().getDistance_params().getTime_readable());
+
+        }else if (requestResponse.getStatus_id() == 6 || requestResponse.getStatus_id() == 8 || requestResponse.getStatus_id() == 10 ){
             info.setVisibility(View.GONE);
             statusImage.setImageResource(R.drawable.declined);
             statusTittle.setText(getResources().getString(R.string.requested_status_dialog_declined_tittle));

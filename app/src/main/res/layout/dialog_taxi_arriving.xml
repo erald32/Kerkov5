@@ -82,7 +82,7 @@
                     android:textColor="#ffffff" />
 
                 <com.jeddigital.kerkotaxi.CustomUI.MyriadProBoldTextView
-                    android:id="@+id/car_type"
+                    android:id="@+id/car_model"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
