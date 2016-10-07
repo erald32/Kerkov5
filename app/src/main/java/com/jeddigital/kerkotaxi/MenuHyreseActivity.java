@@ -127,7 +127,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu_hyrese);
 
-        clientId = "1";
+        clientId = "2";
         StorageConfigurations.setInPrefsClientId(getApplicationContext(), clientId);
 
         userLoggedInPreferences = getSharedPreferences(StorageConfigurations.USER_LOGGED_IN_SHARED_PREFS_KEY, MODE_PRIVATE);
@@ -848,9 +848,11 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     @Override
     public void onUpdateMapAfterUserInteraction() {
-        TakeMeHerePositionSetterAsync takeMeHerePositionSetterAsync = new TakeMeHerePositionSetterAsync(getApplicationContext(), map.getCameraPosition().target);
-        takeMeHerePositionSetterAsync.delegate = this;
-        takeMeHerePositionSetterAsync.execute();
+        if(takeMeHereContainer.getVisibility() == View.VISIBLE){//behet kerkesa vetem kur eshte TV visible
+            TakeMeHerePositionSetterAsync takeMeHerePositionSetterAsync = new TakeMeHerePositionSetterAsync(getApplicationContext(), map.getCameraPosition().target);
+            takeMeHerePositionSetterAsync.delegate = this;
+            takeMeHerePositionSetterAsync.execute();
+        }
     }
 
     @Override
