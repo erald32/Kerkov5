@@ -13,6 +13,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.jeddigital.kerkotaxi.AndroidRestClientApi.AndroidRestClientApiMethods;
 import com.jeddigital.kerkotaxi.AnroidRestModels.NearbyVehicle;
 import com.jeddigital.kerkotaxi.IOTools.InternalStorageTools;
+import com.jeddigital.kerkotaxi.IOTools.StorageConfigurations;
 import com.jeddigital.kerkotaxi.MenuHyreseActivity;
 import com.jeddigital.kerkotaxi.R;
 
@@ -52,7 +53,9 @@ public class NearbyVehiclesViewPagerAdapter extends PagerAdapter {
                 @Override
                 public void onClick(View v) {
                     ((MenuHyreseActivity)context).requestTaxiActionStarted(nearbyVehicles.get(position));
-                    restApiMethods.requestTaxi(nearbyVehicles.get(position).getId(),String.valueOf(1),requestedLocation, client_live_location);
+
+                    String klientid = StorageConfigurations.getInPrefsClientId(context);
+                    restApiMethods.requestTaxi(nearbyVehicles.get(position).getId(), klientid,requestedLocation, client_live_location);
                 }
             });
 

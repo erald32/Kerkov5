@@ -1,6 +1,7 @@
 package com.jeddigital.kerkotaxi;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -26,6 +27,8 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -72,18 +75,21 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         }
     };
 
-    public static final String clientId = "1";
+    public String clientId;
+
+
 
     public static boolean activeActivity = false;
     Handler handler;
     private GoogleMap map;
     Location client_live_location;
-    Geocoder geocoder;
     TextView centerPosTV;
     RelativeLayout takeMeHereContainer;
 
     Float cameraDefaultZoom = 15.0F;
     Button kerkoTaxiBTN;
+    CheckBox keepBoundsCB;
+    boolean keepBounds = true;
 
     Marker requestedPositionMarker;
     Marker requestedVehicleMarker = null;
@@ -121,11 +127,15 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu_hyrese);
 
+        clientId = "1";
+        StorageConfigurations.setInPrefsClientId(getApplicationContext(), clientId);
+
         userLoggedInPreferences = getSharedPreferences(StorageConfigurations.USER_LOGGED_IN_SHARED_PREFS_KEY, MODE_PRIVATE);
         userLoggedInPreferencesEditor = userLoggedInPreferences.edit();
 
         centerPosTV = (TextView) findViewById(R.id.center_position_tv);
         kerkoTaxiBTN = (Button) findViewById(R.id.kerko_taxi_btn);
+        keepBoundsCB = (CheckBox) findViewById(R.id.keepBoundsCB);
         takeMeHereContainer = (RelativeLayout) findViewById(R.id.take_me_here_container);
 
         nearbyVehiclesDialog = (LinearLayout) findViewById(R.id.dialog_nearby_vehicles);
@@ -150,8 +160,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         scrHeightInPX = metrics.heightPixels;
 
         mapPadding = scrWidthInPX/8;
-
-        geocoder = new Geocoder(this, Locale.getDefault());
 
         if(!isGooglePlayServicesAvailable()) {
             finish();                                                                               // ketu mund ti nxjerrim nje warning qe duhet te update ose instaloje google play services
@@ -214,24 +222,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         Log.d("Location changed","yes");
     }
 
-    private String get_name_for_location(LatLng location) {
-        String addressName = "";
-        try {
-            List<android.location.Address> addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1);
-
-            if(addresses.size() > 0){
-                for(int i = 0; i<=addresses.get(0).getMaxAddressLineIndex();i++){
-                    addressName += addresses.get(0).getAddressLine(i)+", ";
-                }
-                addressName = addressName.substring(0,addressName.length()-2);
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return addressName;
-    }
-
     private void setListenersToUIElements(){
    /*     map.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
             @Override
@@ -250,6 +240,16 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             @Override
             public void onClick(View v) {
                 restApiClientMethods.cancelRequest(clientId, client_live_location);
+            }
+        });
+        keepBoundsCB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    keepBounds = true;
+                }else{
+                    keepBounds = false;
+                }
             }
         });
     }
@@ -848,13 +848,14 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     @Override
     public void onUpdateMapAfterUserInteraction() {
-        TakeMeHerePositionSetterAsync takeMeHerePositionSetterAsync = new TakeMeHerePositionSetterAsync(map.getCameraPosition().target);
+        TakeMeHerePositionSetterAsync takeMeHerePositionSetterAsync = new TakeMeHerePositionSetterAsync(getApplicationContext(), map.getCameraPosition().target);
         takeMeHerePositionSetterAsync.delegate = this;
         takeMeHerePositionSetterAsync.execute();
     }
 
     @Override
     public void onUpdateMapOnUserInteraction() {
+        keepBoundsCB.setChecked(false);
         centerPosTV.setText(getResources().getString(R.string.searching_place_text));
     }
 
@@ -867,10 +868,12 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         double lat;
         double lng;
         public AsyncGeocoderResponse delegate = null;
+        Geocoder geocoder;
 
-        public TakeMeHerePositionSetterAsync(LatLng location){
+        public TakeMeHerePositionSetterAsync(Context c, LatLng location){
             this.lat = location.latitude;
             this.lng = location.longitude;
+            geocoder = new Geocoder(c, Locale.getDefault());
         }
 
         @Override
