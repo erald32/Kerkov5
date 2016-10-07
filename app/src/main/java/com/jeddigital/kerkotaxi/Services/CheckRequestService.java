@@ -27,7 +27,6 @@ import java.util.Calendar;
  */
 public class CheckRequestService extends Service{
 
-    public static final String clientId = "1";
     private static final String TAG = "OnStartUp Service Status";
     Handler handler;
     AndroidRestClientApiMethods restClientApiMethods;
@@ -35,7 +34,7 @@ public class CheckRequestService extends Service{
     private Runnable checkRequestInterval = new Runnable(){
         public void run(){
             if(!MenuHyreseActivity.activeActivity){
-                restClientApiMethods.checkRequestStatus(clientId);
+                restClientApiMethods.checkRequestStatus(StorageConfigurations.getInPrefsClientId(getApplicationContext()));
 
                 handler.postDelayed(checkRequestInterval, Configurations.CHECK_REQUEST_STATUS_BACKGROUND_SERVICE_INTERVAL);
             }else{
