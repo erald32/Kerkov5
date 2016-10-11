@@ -60,6 +60,8 @@ import com.jeddigital.kerkotaxi.Interfaces.AsyncGeocoderResponse;
 import com.jeddigital.kerkotaxi.Services.CheckRequestService;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -78,7 +80,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
     public String clientId;
 
 
-
+    LatLngBounds.Builder routeBoundsBuilder;
     public static boolean activeActivity = false;
     Handler handler;
     private GoogleMap map;
@@ -247,6 +249,64 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if(isChecked){
                     keepBounds = true;
+                    List<LatLng> boundsPoints = new ArrayList<LatLng>();
+                    int booking_id = userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1);
+                    List<LatLng> routePoints;
+                    switch (booking_id){
+                        case 1:
+                            boundsPoints.add(requestedPositionMarker.getPosition());
+                            boundsPoints.add(requestedVehicleMarker.getPosition());
+                            break;
+                        case 2:
+                            boundsPoints.add(requestedPositionMarker.getPosition());
+                            boundsPoints.add(requestedVehicleMarker.getPosition());
+                            break;
+                        case 3:
+                            boundsPoints.add(requestedPositionMarker.getPosition());
+                            boundsPoints.add(requestedVehicleMarker.getPosition());
+                            break;
+                        case 4:
+                            boundsPoints.add(startMarker.getPosition());
+                            boundsPoints.add(clientInMarker.getPosition());
+                            routePoints = clientInPolyline.getPoints();
+                            for(LatLng point : routePoints){
+                                boundsPoints.add(point);
+                            }
+                            break;
+                        case 5:
+                            boundsPoints.add(startMarker.getPosition());
+                            boundsPoints.add(finishMarker.getPosition());
+                            routePoints = clientInPolyline.getPoints();
+                            for(LatLng point : routePoints){
+                                boundsPoints.add(point);
+                            }
+                            break;
+                        case 6:
+
+                            break;
+                        case 7:
+
+                            break;
+                        case 8:
+
+                            break;
+                        case 9:
+
+                            break;
+                        case 10:
+
+                            break;
+                        case 11:
+
+                            break;
+                        case 12:
+
+                            break;
+                        case 13:
+
+                            break;
+                    }
+                    animateMapToPoints(mapPadding, boundsPoints );
                 }else{
                     keepBounds = false;
                 }
@@ -442,14 +502,13 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         Toast.makeText(this, "error code response: "+error_code, Toast.LENGTH_SHORT).show();
     }
 
-    private void drawClientInRoute(CheckRequestResponse requestResponse, LatLngBounds.Builder routeBoundsBuilder){
+    private void drawClientInRoute(CheckRequestResponse requestResponse){
 
         PolylineOptions clientInPolyLineOptions = new PolylineOptions().width(5).color(Color.GREEN);
         List<BookingLatLngPosition> bookingLatLngPositions = requestResponse.getBooking_vehicle_route();
         for(BookingLatLngPosition bookingLatLngPosition : bookingLatLngPositions){
             if(bookingLatLngPosition.getLat_lng_booking_status() == 4){
                 clientInPolyLineOptions.add(new LatLng(bookingLatLngPosition.getLat(), bookingLatLngPosition.getLng()));
-                routeBoundsBuilder.include(new LatLng(bookingLatLngPosition.getLat(), bookingLatLngPosition.getLng()));
             }
         }
 
@@ -457,7 +516,6 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             clientInPolyline.remove();
         }
         clientInPolyline = map.addPolyline(clientInPolyLineOptions);
-
     }
 
     private void positionFinishMarker(CheckRequestResponse requestResponse){
@@ -505,18 +563,19 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     private void setRequestedPositionMarker(CheckRequestResponse requestResponse){
         if(requestedPositionMarker == null){
+            LatLng latlng = new LatLng(requestResponse.getClient_requested_lat(), requestResponse.getClient_requested_lng());
+
             requestedPositionMarker = map.addMarker(new MarkerOptions().position(new LatLng(requestResponse.getClient_requested_lat(), requestResponse.getClient_requested_lng())));
             requestedPositionMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.client_pin));
             requestedPositionMarker.setTitle("pozicioni i kerkuar");
             requestedPositionMarker.showInfoWindow();
         }
-        requestedPositionMarker.setPosition(new LatLng(requestResponse.getClient_requested_lat(), requestResponse.getClient_requested_client_lng()));
+        requestedPositionMarker.setPosition(new LatLng(requestResponse.getClient_requested_lat(), requestResponse.getClient_requested_lng()));
 
     }
 
     public void handleCheckRequestAction(CheckRequestResponse requestResponse){
         int booking_status_id = requestResponse.getStatus_id();
-        LatLngBounds.Builder routeBoundsBuilder = new LatLngBounds.Builder();
         Log.e("dev", "handleCheckRequestAction 'homeActivity' bookingStatusId = "+booking_status_id);
 
         if(booking_status_id == 1){//pending
@@ -528,9 +587,10 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             requestedVehicleMarker.setTitle("Në pritje të konfirmimit");
             requestedVehicleMarker.showInfoWindow();
 
-            routeBoundsBuilder.include(requestedPositionMarker.getPosition());
-            routeBoundsBuilder.include(requestedVehicleMarker.getPosition());
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), mapPadding));
+            List<LatLng> boundsPoints = new ArrayList<LatLng>();
+            boundsPoints.add(requestedPositionMarker.getPosition());
+            boundsPoints.add(requestedVehicleMarker.getPosition());
+            animateMapToPoints(mapPadding, boundsPoints );
 
             if(!requestedVehicleDialog.isShowing()){
                 requestTaxiActionStarted(requestResponse.getNearbyVehicle());
@@ -547,9 +607,10 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             requestedVehicleMarker.setTitle("TAXI-ja në ardhje");
             requestedVehicleMarker.showInfoWindow();
 
-            routeBoundsBuilder.include(requestedPositionMarker.getPosition());
-            routeBoundsBuilder.include(requestedVehicleMarker.getPosition());
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), mapPadding));
+            List<LatLng> boundsPoints = new ArrayList<LatLng>();
+            boundsPoints.add(requestedPositionMarker.getPosition());
+            boundsPoints.add(requestedVehicleMarker.getPosition());
+            animateMapToPoints(mapPadding, boundsPoints );
 
             if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
                 notifyUserForChangedRequestStatus(requestResponse);
@@ -574,9 +635,10 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             positionRequestedVehicleMarker(requestResponse.getNearbyVehicle().getLat(), requestResponse.getNearbyVehicle().getLng());
             setRequestedPositionMarker(requestResponse);
 
-            routeBoundsBuilder.include(requestedPositionMarker.getPosition());
-            routeBoundsBuilder.include(requestedVehicleMarker.getPosition());
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), mapPadding));
+            List<LatLng> boundsPoints = new ArrayList<LatLng>();
+            boundsPoints.add(requestedPositionMarker.getPosition());
+            boundsPoints.add(requestedVehicleMarker.getPosition());
+            animateMapToPoints(mapPadding, boundsPoints );
 
             notifyUserForTaxiArrival(requestResponse);
 
@@ -592,11 +654,21 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             removeRequestedPostionMarker();
             positionClientInMarker(requestResponse);
             positionStartMarker(requestResponse);
-            drawClientInRoute(requestResponse, routeBoundsBuilder);
+            drawClientInRoute(requestResponse);
 
-            routeBoundsBuilder.include(startMarker.getPosition());
-            routeBoundsBuilder.include(clientInMarker.getPosition());
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), mapPadding));
+
+            List<LatLng> boundsPoints = new ArrayList<LatLng>();
+            List<BookingLatLngPosition> bookingLatLngPositions = requestResponse.getBooking_vehicle_route();
+            for(BookingLatLngPosition bookingLatLngPosition : bookingLatLngPositions){
+                if(bookingLatLngPosition.getLat_lng_booking_status() == 4){
+                    boundsPoints.add(new LatLng(bookingLatLngPosition.getLat(), bookingLatLngPosition.getLng()));
+                }
+            }
+
+            boundsPoints.add(startMarker.getPosition());
+            boundsPoints.add(clientInMarker.getPosition());
+            animateMapToPoints(mapPadding, boundsPoints);
+
             Toast.makeText(MenuHyreseActivity.this, "Ne taxi!!", Toast.LENGTH_SHORT).show();
         }else if(booking_status_id == 5){//kompletuar
 
@@ -605,13 +677,21 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                 removeRequestedVehicleMarker();
                 removeRequestedPostionMarker();
                 removeClientInMarker();
-                drawClientInRoute(requestResponse, routeBoundsBuilder);
-
+                drawClientInRoute(requestResponse);
                 positionStartMarker(requestResponse);
                 positionFinishMarker(requestResponse);
-                routeBoundsBuilder.include(startMarker.getPosition());
-                routeBoundsBuilder.include(finishMarker.getPosition());
-                map.animateCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), mapPadding));
+
+                List<LatLng> boundsPoints = new ArrayList<LatLng>();
+                List<BookingLatLngPosition> bookingLatLngPositions = requestResponse.getBooking_vehicle_route();
+                for(BookingLatLngPosition bookingLatLngPosition : bookingLatLngPositions){
+                    if(bookingLatLngPosition.getLat_lng_booking_status() == 4){
+                        boundsPoints.add(new LatLng(bookingLatLngPosition.getLat(), bookingLatLngPosition.getLng()));
+                    }
+                }
+                boundsPoints.add(startMarker.getPosition());
+                boundsPoints.add(finishMarker.getPosition());
+
+                animateMapToPoints(mapPadding, boundsPoints);
             }
 
             handler.removeCallbacks(checkRequestInterval);
@@ -621,7 +701,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             removeRequestedVehicleMarker();
             if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
                 notifyUserForChangedRequestStatus(requestResponse);
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(client_live_location.getLatitude(), client_live_location.getLongitude()),cameraDefaultZoom));
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(client_live_location.getLatitude(), client_live_location.getLongitude()), cameraDefaultZoom));
                 Toast.makeText(MenuHyreseActivity.this, "Porosia juaj u anullua nga shoferi", Toast.LENGTH_SHORT).show();
             }
             handler.removeCallbacks(checkRequestInterval);
@@ -904,6 +984,18 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         @Override
         protected void onPostExecute(String result) {
             delegate.processShowingAdress(result);
+        }
+    }
+
+    private void animateMapToPoints(int mapPadding, List<LatLng> points){
+        routeBoundsBuilder = new LatLngBounds.Builder();
+        for(LatLng point : points){
+            routeBoundsBuilder.include(point);
+        }
+        if(keepBounds){
+            if(points.size() > 0){
+                map.animateCamera(CameraUpdateFactory.newLatLngBounds(routeBoundsBuilder.build(), mapPadding));
+            }
         }
     }
 }

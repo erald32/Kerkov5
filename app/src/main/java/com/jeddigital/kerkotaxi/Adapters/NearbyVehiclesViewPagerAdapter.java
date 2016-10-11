@@ -55,7 +55,7 @@ public class NearbyVehiclesViewPagerAdapter extends PagerAdapter {
                     ((MenuHyreseActivity)context).requestTaxiActionStarted(nearbyVehicles.get(position));
 
                     String klientid = StorageConfigurations.getInPrefsClientId(context);
-                    restApiMethods.requestTaxi(nearbyVehicles.get(position).getId(), klientid,requestedLocation, client_live_location);
+                    restApiMethods.requestTaxi(nearbyVehicles.get(position).getId(), klientid, requestedLocation, client_live_location);
                 }
             });
 
