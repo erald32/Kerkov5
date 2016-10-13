@@ -531,7 +531,8 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
     private void positionStartMarker(CheckRequestResponse requestResponse){
         if(startMarker == null){
-            startMarker = map.addMarker(new MarkerOptions().position(new LatLng(requestResponse.getClient_in_vehicle_lat(), requestResponse.getClient_in_vehicle_lng())));
+            LatLng s = new LatLng(requestResponse.getClient_in_vehicle_lat(), requestResponse.getClient_in_vehicle_lng());
+            startMarker = map.addMarker(new MarkerOptions().position(s));
             startMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.start_marker));
             startMarker.setTitle("START");
             startMarker.showInfoWindow();
@@ -715,6 +716,9 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
         }else if(booking_status_id == 9){//Refuzuar Nga Klienti Duke Marre Klientin
             handler.removeCallbacks(checkRequestInterval);
         }else if(booking_status_id == 10){//Refuzuar Nga Shoferi Duke Pritur Klientin
+            taxiArrivedDialog.cancel();
+            removeRequestedPostionMarker();
+            removeRequestedVehicleMarker();
             if(userLoggedInPreferences.getInt(StorageConfigurations.LAST_BOOKING_STATUS_ID_KNOWN, -1) != booking_status_id){//useri nuk eshte notifikuar per kete status
                 notifyUserForChangedRequestStatus(requestResponse);
             }
