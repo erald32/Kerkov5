@@ -254,31 +254,41 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                     List<LatLng> routePoints;
                     switch (booking_id){
                         case 1:
-                            boundsPoints.add(requestedPositionMarker.getPosition());
-                            boundsPoints.add(requestedVehicleMarker.getPosition());
+                            if(requestedPositionMarker != null && requestedVehicleMarker != null){
+                                boundsPoints.add(requestedPositionMarker.getPosition());
+                                boundsPoints.add(requestedVehicleMarker.getPosition());
+                            }
                             break;
                         case 2:
-                            boundsPoints.add(requestedPositionMarker.getPosition());
-                            boundsPoints.add(requestedVehicleMarker.getPosition());
+                            if(requestedPositionMarker != null && requestedVehicleMarker != null) {
+                                boundsPoints.add(requestedPositionMarker.getPosition());
+                                boundsPoints.add(requestedVehicleMarker.getPosition());
+                            }
                             break;
                         case 3:
-                            boundsPoints.add(requestedPositionMarker.getPosition());
-                            boundsPoints.add(requestedVehicleMarker.getPosition());
+                            if(requestedPositionMarker != null && requestedVehicleMarker != null) {
+                                boundsPoints.add(requestedPositionMarker.getPosition());
+                                boundsPoints.add(requestedVehicleMarker.getPosition());
+                            }
                             break;
                         case 4:
-                            boundsPoints.add(startMarker.getPosition());
-                            boundsPoints.add(clientInMarker.getPosition());
-                            routePoints = clientInPolyline.getPoints();
-                            for(LatLng point : routePoints){
-                                boundsPoints.add(point);
+                            if(startMarker != null && clientInMarker != null && clientInPolyline != null ){
+                                boundsPoints.add(startMarker.getPosition());
+                                boundsPoints.add(clientInMarker.getPosition());
+                                routePoints = clientInPolyline.getPoints();
+                                for (LatLng point : routePoints) {
+                                    boundsPoints.add(point);
+                                }
                             }
                             break;
                         case 5:
-                            boundsPoints.add(startMarker.getPosition());
-                            boundsPoints.add(finishMarker.getPosition());
-                            routePoints = clientInPolyline.getPoints();
-                            for(LatLng point : routePoints){
-                                boundsPoints.add(point);
+                            if(startMarker != null && finishMarker != null && clientInPolyline != null){
+                                boundsPoints.add(startMarker.getPosition());
+                                boundsPoints.add(finishMarker.getPosition());
+                                routePoints = clientInPolyline.getPoints();
+                                for(LatLng point : routePoints){
+                                    boundsPoints.add(point);
+                                }
                             }
                             break;
                         case 6:
@@ -306,7 +316,19 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
 
                             break;
                     }
-                    animateMapToPoints(mapPadding, boundsPoints );
+
+                    if(nearbyVehiclesDialog.getVisibility() == View.VISIBLE){
+                        if(nearbyVehiclesMarkers != null){
+                            for (Map.Entry me : nearbyVehiclesMarkers.entrySet()) {
+                                boundsPoints.add(((Marker)(me.getValue())).getPosition());
+                            }
+                            boundsPoints.add(requestedPositionMarker.getPosition());
+                        }
+                    }
+
+                    if(boundsPoints.size()>0){
+                        animateMapToPoints(mapPadding, boundsPoints);
+                    }
                 }else{
                     keepBounds = false;
                 }
@@ -362,6 +384,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
                 public void onClick(View v) {
                     map.setPadding(0,0,0,0);
                     map.clear();
+                    nearbyVehiclesMarkers.clear();
                     map.animateCamera(CameraUpdateFactory.newLatLng(requestedLocation));
                     kerkoTaxiBTN.setVisibility(View.VISIBLE);
                     takeMeHereContainer.setVisibility(View.VISIBLE);
@@ -747,6 +770,7 @@ public class MenuHyreseActivity extends FragmentActivity implements LocationList
             if(taxiArrivedDialog != null){
                 taxiArrivedDialog.cancel();
             }
+            map.setPadding(0,0,0,0);
             requestedVehicleDialog.cancel();
             removeRequestedPostionMarker();
             removeRequestedVehicleMarker();
