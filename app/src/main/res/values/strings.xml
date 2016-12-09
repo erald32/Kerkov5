@@ -1,10 +1,23 @@
 <resources>
-    <string name="app_name">Kerko Taxi</string>
-    <string name="title_activity_menu_hyrese">Kerko Taxi</string>
+    <string name="app_name">Kerko </string>
+    <string name="title_activity_menu_hyrese">Kerko </string>
     <string name="cancel_request">Anullo Porosinë</string>
-    <string name="kerko_taxi">Kërko Taxi</string>
+    <string name="kerko_taxi">Kërko </string>
     <string name="searching_place_text">...</string>
     <string name="come_and_take_me">Eja më merr</string>
     <string name="requested_status_dialog_accepted_tittle">KËRKESA JUAJ U PRANUA NGA SHOFERI</string>
     <string name="requested_status_dialog_declined_tittle">KËRKESA JUAJ U REFUZUA NGA SHOFERI</string>
+
+
+    <string name="hint_name">Emer</string>
+    <string name="hint_last_name">Mbiemer</string>
+    <string name="hint_phone_nr">Nr tel</string>
+    <string name="hint_password">Fjalekalimi</string>
+    <string name="hint_ri_enter_password">Rivendos fjalekalimin</string>
+    <string name="btn_sign_up">Rregjistrohu</string>
+
+    <string name="err_msg_name">Enter your full name</string>
+    <string name="err_msg_email">Enter valid email address</string>
+    <string name="err_msg_password">Enter the password</string>
+
 </resources>

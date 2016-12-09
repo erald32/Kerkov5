@@ -32,6 +32,12 @@
             android:name=".MenuHyreseActivity"
             android:screenOrientation="portrait"
             android:label="@string/title_activity_menu_hyrese">
+        </activity>
+
+        <activity
+            android:name=".CheckLogin"
+            android:screenOrientation="portrait"
+            android:label="@string/title_activity_menu_hyrese">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
