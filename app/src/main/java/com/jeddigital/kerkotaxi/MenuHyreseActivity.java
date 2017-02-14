@@ -19,6 +19,7 @@ import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
+import android.telephony.TelephonyManager;
 import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -61,7 +62,6 @@ import com.jeddigital.kerkotaxi.Services.CheckRequestService;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;

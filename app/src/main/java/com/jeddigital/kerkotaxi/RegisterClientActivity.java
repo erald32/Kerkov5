@@ -10,7 +10,7 @@ import android.widget.Toast;
  * Created by Theodhori on 12/9/2016.
  */
 
-public class CheckLogin extends AppCompatActivity {
+public class RegisterClientActivity extends AppCompatActivity {
 
     EditText first_nameET;
     EditText last_nameET;
@@ -21,7 +21,7 @@ public class CheckLogin extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_checklogin);
+        setContentView(R.layout.activity_register_client);
 
         first_nameET = (EditText) findViewById(R.id.input_first_name);
         last_nameET = (EditText) findViewById(R.id.input_last_name);
